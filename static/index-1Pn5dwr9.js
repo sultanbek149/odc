@@ -29522,506 +29522,1185 @@ var GO = function (r, e, t, n) {
 //     margin-bottom: var(--wui-spacing-3xs);
 //   }
 // `;
-var Tu = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let gc = class extends Xt {
-    constructor() {
-        super(),
-            this.usubscribe = [],
-            this.address = Pr.state.address,
-            this.profileImage = Pr.state.profileImage,
-            this.profileName = Pr.state.profileName,
-            this.balance = Pr.state.balance,
-            this.balanceSymbol = Pr.state.balanceSymbol,
-            this.network = Tn.state.caipNetwork,
-            this.disconecting = !1,
-            this.usubscribe.push(Pr.subscribe(e => {
-                e.address ? (this.address = e.address,
-                    this.profileImage = e.profileImage,
-                    this.profileName = e.profileName,
-                    this.balance = e.balance,
-                    this.balanceSymbol = e.balanceSymbol) : en.close()
-            }
-            ), Tn.subscribeKey("caipNetwork", e => {
-                e != null && e.id && (this.network = e)
-            }
-            ))
-    }
-    disconnectedCallback() {
-        this.usubscribe.forEach(e => e())
-    }
-    render() {
-        var t;
-        if (!this.address)
-            throw new Error("w3m-account-view: No account provided");
-        const e = Cn.getNetworkImage(this.network);
-        return Ee`
-      <wui-flex
-        flexDirection="column"
-        .padding=${["0", "s", "m", "s"]}
-        alignItems="center"
-        gap="l"
-      >
-        <wui-avatar
-          alt=${this.address}
-          address=${this.address}
-          imageSrc=${kr(this.profileImage === null ? void 0 : this.profileImage)}
-        ></wui-avatar>
-
-        <wui-flex flexDirection="column" alignItems="center">
-          <wui-flex gap="3xs" alignItems="center" justifyContent="center">
-            <wui-text variant="large-600" color="fg-100">
-              ${this.profileName ? Vr.getTruncateString({
-            string: this.profileName,
-            charsStart: 20,
-            charsEnd: 0,
-            truncate: "end"
-        }) : Vr.getTruncateString({
-            string: this.address,
-            charsStart: 4,
-            charsEnd: 6,
-            truncate: "middle"
-        })}
-            </wui-text>
-            <wui-icon-link
-              size="md"
-              icon="copy"
-              iconColor="fg-200"
-              @click=${this.onCopyAddress}
-            ></wui-icon-link>
-          </wui-flex>
-          <wui-flex gap="s" flexDirection="column" alignItems="center">
-            <wui-text variant="paragraph-500" color="fg-200">
-              ${vt.formatBalance(this.balance, this.balanceSymbol)}
-            </wui-text>
-
-            ${this.explorerBtnTemplate()}
-          </wui-flex>
-        </wui-flex>
-      </wui-flex>
-
-      <wui-flex flexDirection="column" gap="xs" .padding=${["0", "s", "s", "s"]}>
-        ${this.emailCardTemplate()} ${this.emailBtnTemplate()}
-
-        <wui-list-item
-          .variant=${e ? "image" : "icon"}
-          iconVariant="overlay"
-          icon="networkPlaceholder"
-          imageSrc=${kr(e)}
-          ?chevron=${this.isAllowedNetworkSwitch()}
-          @click=${this.onNetworks.bind(this)}
-          data-testid="w3m-account-select-network"
-        >
-          <wui-text variant="paragraph-500" color="fg-100">
-            ${((t = this.network) == null ? void 0 : t.name) ?? "Unknown"}
-          </wui-text>
-        </wui-list-item>
-        <wui-list-item
-          iconVariant="blue"
-          icon="swapHorizontalBold"
-          iconSize="sm"
-          ?chevron=${!0}
-          @click=${this.onTransactions.bind(this)}
-        >
-          <wui-text variant="paragraph-500" color="fg-100">Activity</wui-text>
-        </wui-list-item>
-        <wui-list-item
-          variant="icon"
-          iconVariant="overlay"
-          icon="disconnect"
-          ?chevron=${!1}
-          .loading=${this.disconecting}
-          @click=${this.onDisconnect.bind(this)}
-          data-testid="disconnect-button"
-        >
-          <wui-text variant="paragraph-500" color="fg-200">Disconnect</wui-text>
-        </wui-list-item>
-      </wui-flex>
-    `
-    }
-    emailCardTemplate() {
-        const e = ls.getConnectedConnector()
-            , t = Xr.getEmailConnector()
-            , { origin: n } = location;
-        return !t || e !== "EMAIL" || n.includes(tl.SECURE_SITE) ? null : Ee`
-      <wui-notice-card
-        @click=${this.onGoToUpgradeView.bind(this)}
-        label="Upgrade your wallet"
-        description="Transition to a non-custodial wallet"
-        icon="wallet"
-      ></wui-notice-card>
-    `
-    }
-    emailBtnTemplate() {
-        const e = ls.getConnectedConnector()
-            , t = Xr.getEmailConnector();
-        if (!t || e !== "EMAIL")
-            return null;
-        const n = t.provider.getEmail() ?? "";
-        return Ee`
-      <wui-list-item
-        variant="icon"
-        iconVariant="overlay"
-        icon="mail"
-        iconSize="sm"
-        ?chevron=${!0}
-        @click=${() => this.onGoToUpdateEmail(n)}
-      >
-        <wui-text variant="paragraph-500" color="fg-100">${n}</wui-text>
-      </wui-list-item>
-    `
-    }
-    explorerBtnTemplate() {
-        const { addressExplorerUrl: e } = Pr.state;
-        return e ? Ee`
-      <wui-button size="sm" variant="shade" @click=${this.onExplorer.bind(this)}>
-        <wui-icon size="sm" color="inherit" slot="iconLeft" name="compass"></wui-icon>
-        Block Explorer
-        <wui-icon size="sm" color="inherit" slot="iconRight" name="externalLink"></wui-icon>
-      </wui-button>
-    ` : null
-    }
-    isAllowedNetworkSwitch() {
-        const { requestedCaipNetworks: e } = Tn.state
-            , t = e ? e.length > 1 : !1
-            , n = e == null ? void 0 : e.find(({ id: i }) => {
-                var s;
-                return i === ((s = this.network) == null ? void 0 : s.id)
-            }
-            );
-        return t || !n
-    }
-    onCopyAddress() {
-        try {
-            this.address && (vt.copyToClopboard(this.address),
-                Rn.showSuccess("Address copied"))
-        } catch {
-            Rn.showError("Failed to copy")
-        }
-    }
-    onNetworks() {
-        this.isAllowedNetworkSwitch() && at.push("Networks")
-    }
-    onTransactions() {
-        Ft.sendEvent({
-            type: "track",
-            event: "CLICK_TRANSACTIONS"
-        }),
-            at.push("Transactions")
-    }
-    async onDisconnect() {
-        try {
-            this.disconecting = !0,
-                await wr.disconnect(),
-                Ft.sendEvent({
-                    type: "track",
-                    event: "DISCONNECT_SUCCESS"
-                }),
-                en.close()
-        } catch {
-            Ft.sendEvent({
-                type: "track",
-                event: "DISCONNECT_ERROR"
-            }),
-                Rn.showError("Failed to disconnect")
-        } finally {
-            this.disconecting = !1
-        }
-    }
-    onExplorer() {
-        const { addressExplorerUrl: e } = Pr.state;
-        e && vt.openHref(e, "_blank")
-    }
-    onGoToUpgradeView() {
-        Ft.sendEvent({
-            type: "track",
-            event: "EMAIL_UPGRADE_FROM_MODAL"
-        }),
-            at.push("UpgradeEmailWallet")
-    }
-    onGoToUpdateEmail(e) {
-        at.push("UpdateEmailWallet", {
-            email: e
-        })
-    }
-}
-    ;
-// gc.styles = JX;
-Tu([it()], gc.prototype, "address", void 0);
-Tu([it()], gc.prototype, "profileImage", void 0);
-Tu([it()], gc.prototype, "profileName", void 0);
-Tu([it()], gc.prototype, "balance", void 0);
-Tu([it()], gc.prototype, "balanceSymbol", void 0);
-Tu([it()], gc.prototype, "network", void 0);
-Tu([it()], gc.prototype, "disconecting", void 0);
-gc = Tu([Pe("w3m-account-view")], gc);
-var KO = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let gE = class extends Xt {
-    constructor() {
-        super(...arguments),
-            this.search = "",
-            this.onDebouncedSearch = vt.debounce(e => {
-                this.search = e
-            }
-            )
-    }
-    render() {
-        const e = this.search.length >= 2;
-        return Ee`
-      <wui-flex padding="s" gap="s">
-        <wui-search-bar @inputChange=${this.onInputChange.bind(this)}></wui-search-bar>
-        ${this.qrButtonTemplate()}
-      </wui-flex>
-      ${e ? Ee`<w3m-all-wallets-search query=${this.search}></w3m-all-wallets-search>` : Ee`<w3m-all-wallets-list></w3m-all-wallets-list>`}
-    `
-    }
-    onInputChange(e) {
-        this.onDebouncedSearch(e.detail)
-    }
-    qrButtonTemplate() {
-        return vt.isMobile() ? Ee`
-        <wui-icon-box
-          size="lg"
-          iconSize="xl"
-          iconColor="accent-100"
-          backgroundColor="accent-100"
-          icon="qrCode"
-          background="transparent"
-          border
-          borderColor="wui-accent-glass-010"
-          @click=${this.onWalletConnectQr.bind(this)}
-        ></wui-icon-box>
-      ` : null
-    }
-    onWalletConnectQr() {
-        at.push("ConnectingWalletConnect")
-    }
-}
-    ;
-KO([it()], gE.prototype, "search", void 0);
-gE = KO([Pe("w3m-all-wallets-view")], gE);
-const YX = fn`
-  wui-flex {
-    max-height: clamp(360px, 540px, 80vh);
-    overflow: scroll;
-    scrollbar-width: none;
-  }
-
-  wui-flex::-webkit-scrollbar {
-    display: none;
-  }
-`;
-var ZO = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-// let Gy = class extends Xt {
+// var Tu = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let gc = class extends Xt {
 //     constructor() {
 //         super(),
-//             this.unsubscribe = [],
-//             this.connectors = Xr.state.connectors,
-//             this.unsubscribe.push(Xr.subscribeKey("connectors", e => this.connectors = e))
+//             this.usubscribe = [],
+//             this.address = Pr.state.address,
+//             this.profileImage = Pr.state.profileImage,
+//             this.profileName = Pr.state.profileName,
+//             this.balance = Pr.state.balance,
+//             this.balanceSymbol = Pr.state.balanceSymbol,
+//             this.network = Tn.state.caipNetwork,
+//             this.disconecting = !1,
+//             this.usubscribe.push(Pr.subscribe(e => {
+//                 e.address ? (this.address = e.address,
+//                     this.profileImage = e.profileImage,
+//                     this.profileName = e.profileName,
+//                     this.balance = e.balance,
+//                     this.balanceSymbol = e.balanceSymbol) : en.close()
+//             }
+//             ), Tn.subscribeKey("caipNetwork", e => {
+//                 e != null && e.id && (this.network = e)
+//             }
+//             ))
 //     }
 //     disconnectedCallback() {
-//         this.unsubscribe.forEach(e => e())
+//         this.usubscribe.forEach(e => e())
 //     }
 //     render() {
+//         var t;
+//         if (!this.address)
+//             throw new Error("w3m-account-view: No account provided");
+//         const e = Cn.getNetworkImage(this.network);
 //         return Ee`
-//       <wui-flex flexDirection="column" padding="s" gap="xs">
-//         <w3m-email-login-widget></w3m-email-login-widget>
+//       <wui-flex
+//         flexDirection="column"
+//         .padding=${["0", "s", "m", "s"]}
+//         alignItems="center"
+//         gap="l"
+//       >
+//         <wui-avatar
+//           alt=${this.address}
+//           address=${this.address}
+//           imageSrc=${kr(this.profileImage === null ? void 0 : this.profileImage)}
+//         ></wui-avatar>
 
-//         ${this.walletConnectConnectorTemplate()} ${this.recentTemplate()}
-//         ${this.announcedTemplate()} ${this.injectedTemplate()} ${this.featuredTemplate()}
-//         ${this.customTemplate()} ${this.recommendedTemplate()} ${this.connectorsTemplate()}
-//         ${this.allWalletsTemplate()}
+//         <wui-flex flexDirection="column" alignItems="center">
+//           <wui-flex gap="3xs" alignItems="center" justifyContent="center">
+//             <wui-text variant="large-600" color="fg-100">
+//               ${this.profileName ? Vr.getTruncateString({
+//             string: this.profileName,
+//             charsStart: 20,
+//             charsEnd: 0,
+//             truncate: "end"
+//         }) : Vr.getTruncateString({
+//             string: this.address,
+//             charsStart: 4,
+//             charsEnd: 6,
+//             truncate: "middle"
+//         })}
+//             </wui-text>
+//             <wui-icon-link
+//               size="md"
+//               icon="copy"
+//               iconColor="fg-200"
+//               @click=${this.onCopyAddress}
+//             ></wui-icon-link>
+//           </wui-flex>
+//           <wui-flex gap="s" flexDirection="column" alignItems="center">
+//             <wui-text variant="paragraph-500" color="fg-200">
+//               ${vt.formatBalance(this.balance, this.balanceSymbol)}
+//             </wui-text>
+
+//             ${this.explorerBtnTemplate()}
+//           </wui-flex>
+//         </wui-flex>
 //       </wui-flex>
-//       <w3m-legal-footer></w3m-legal-footer>
+
+//       <wui-flex flexDirection="column" gap="xs" .padding=${["0", "s", "s", "s"]}>
+//         ${this.emailCardTemplate()} ${this.emailBtnTemplate()}
+
+//         <wui-list-item
+//           .variant=${e ? "image" : "icon"}
+//           iconVariant="overlay"
+//           icon="networkPlaceholder"
+//           imageSrc=${kr(e)}
+//           ?chevron=${this.isAllowedNetworkSwitch()}
+//           @click=${this.onNetworks.bind(this)}
+//           data-testid="w3m-account-select-network"
+//         >
+//           <wui-text variant="paragraph-500" color="fg-100">
+//             ${((t = this.network) == null ? void 0 : t.name) ?? "Unknown"}
+//           </wui-text>
+//         </wui-list-item>
+//         <wui-list-item
+//           iconVariant="blue"
+//           icon="swapHorizontalBold"
+//           iconSize="sm"
+//           ?chevron=${!0}
+//           @click=${this.onTransactions.bind(this)}
+//         >
+//           <wui-text variant="paragraph-500" color="fg-100">Activity</wui-text>
+//         </wui-list-item>
+//         <wui-list-item
+//           variant="icon"
+//           iconVariant="overlay"
+//           icon="disconnect"
+//           ?chevron=${!1}
+//           .loading=${this.disconecting}
+//           @click=${this.onDisconnect.bind(this)}
+//           data-testid="disconnect-button"
+//         >
+//           <wui-text variant="paragraph-500" color="fg-200">Disconnect</wui-text>
+//         </wui-list-item>
+//       </wui-flex>
 //     `
 //     }
-//     walletConnectConnectorTemplate() {
-//         if (vt.isMobile())
+//     emailCardTemplate() {
+//         const e = ls.getConnectedConnector()
+//             , t = Xr.getEmailConnector()
+//             , { origin: n } = location;
+//         return !t || e !== "EMAIL" || n.includes(tl.SECURE_SITE) ? null : Ee`
+//       <wui-notice-card
+//         @click=${this.onGoToUpgradeView.bind(this)}
+//         label="Upgrade your wallet"
+//         description="Transition to a non-custodial wallet"
+//         icon="wallet"
+//       ></wui-notice-card>
+//     `
+//     }
+//     emailBtnTemplate() {
+//         const e = ls.getConnectedConnector()
+//             , t = Xr.getEmailConnector();
+//         if (!t || e !== "EMAIL")
 //             return null;
-//         const e = this.connectors.find(t => t.type === "WALLET_CONNECT");
-//         return e ? Ee`
-//       <wui-list-wallet
-//         imageSrc=${kr(Cn.getConnectorImage(e))}
-//         name=${e.name ?? "Unknown"}
-//         @click=${() => this.onConnector(e)}
-//         tagLabel="qr code"
-//         tagVariant="main"
-//         data-testid="wallet-selector-walletconnect"
+//         const n = t.provider.getEmail() ?? "";
+//         return Ee`
+//       <wui-list-item
+//         variant="icon"
+//         iconVariant="overlay"
+//         icon="mail"
+//         iconSize="sm"
+//         ?chevron=${!0}
+//         @click=${() => this.onGoToUpdateEmail(n)}
 //       >
-//       </wui-list-wallet>
+//         <wui-text variant="paragraph-500" color="fg-100">${n}</wui-text>
+//       </wui-list-item>
+//     `
+//     }
+//     explorerBtnTemplate() {
+//         const { addressExplorerUrl: e } = Pr.state;
+//         return e ? Ee`
+//       <wui-button size="sm" variant="shade" @click=${this.onExplorer.bind(this)}>
+//         <wui-icon size="sm" color="inherit" slot="iconLeft" name="compass"></wui-icon>
+//         Block Explorer
+//         <wui-icon size="sm" color="inherit" slot="iconRight" name="externalLink"></wui-icon>
+//       </wui-button>
 //     ` : null
 //     }
-//     customTemplate() {
-//         const { customWallets: e } = Ur.state;
-//         return e != null && e.length ? this.filterOutDuplicateWallets(e).map(n => Ee`
-//         <wui-list-wallet
-//           imageSrc=${kr(Cn.getWalletImage(n))}
-//           name=${n.name ?? "Unknown"}
-//           @click=${() => this.onConnectWallet(n)}
-//         >
-//         </wui-list-wallet>
-//       `) : null
-//     }
-//     featuredTemplate() {
-//         if (!this.connectors.find(i => i.type === "WALLET_CONNECT"))
-//             return null;
-//         const { featured: t } = lr.state;
-//         return t.length ? this.filterOutDuplicateWallets(t).map(i => Ee`
-//         <wui-list-wallet
-//           imageSrc=${kr(Cn.getWalletImage(i))}
-//           name=${i.name ?? "Unknown"}
-//           @click=${() => this.onConnectWallet(i)}
-//         >
-//         </wui-list-wallet>
-//       `) : null
-//     }
-//     recentTemplate() {
-//         return ls.getRecentWallets().map(t => Ee`
-//         <wui-list-wallet
-//           imageSrc=${kr(Cn.getWalletImage(t))}
-//           name=${t.name ?? "Unknown"}
-//           @click=${() => this.onConnectWallet(t)}
-//           tagLabel="recent"
-//           tagVariant="shade"
-//         >
-//         </wui-list-wallet>
-//       `)
-//     }
-//     announcedTemplate() {
-//         return this.connectors.map(e => e.type !== "ANNOUNCED" ? null : Ee`
-//         <wui-list-wallet
-//           imageSrc=${kr(Cn.getConnectorImage(e))}
-//           name=${e.name ?? "Unknown"}
-//           @click=${() => this.onConnector(e)}
-//           tagVariant="success"
-//           .installed=${!0}
-//         >
-//         </wui-list-wallet>
-//       `)
-//     }
-//     injectedTemplate() {
-//         const e = this.connectors.find(t => t.type === "ANNOUNCED");
-//         return this.connectors.map(t => t.type !== "INJECTED" || !wr.checkInstalled() ? null : Ee`
-//         <wui-list-wallet
-//           imageSrc=${kr(Cn.getConnectorImage(t))}
-//           .installed=${!!e}
-//           name=${t.name ?? "Unknown"}
-//           @click=${() => this.onConnector(t)}
-//         >
-//         </wui-list-wallet>
-//       `)
-//     }
-//     connectorsTemplate() {
-//         const e = Xr.getAnnouncedConnectorRdns();
-//         return this.connectors.map(t => ["WALLET_CONNECT", "INJECTED", "ANNOUNCED", "EMAIL"].includes(t.type) || e.includes(tl.CONNECTOR_RDNS_MAP[t.id]) ? null : Ee`
-//         <wui-list-wallet
-//           imageSrc=${kr(Cn.getConnectorImage(t))}
-//           name=${t.name ?? "Unknown"}
-//           @click=${() => this.onConnector(t)}
-//         >
-//         </wui-list-wallet>
-//       `)
-//     }
-//     allWalletsTemplate() {
-//         if (!this.connectors.find(a => a.type === "WALLET_CONNECT"))
-//             return null;
-//         const t = lr.state.count
-//             , n = lr.state.featured.length
-//             , i = t + n
-//             , s = i < 10 ? i : Math.floor(i / 10) * 10
-//             , o = s < i ? `${s}+` : `${s}`;
-//         return Ee`
-//       <wui-list-wallet
-//         name="All Wallets"
-//         walletIcon="allWallets"
-//         showAllWallets
-//         @click=${this.onAllWallets.bind(this)}
-//         tagLabel=${o}
-//         tagVariant="shade"
-//         data-testid="all-wallets"
-//       ></wui-list-wallet>
-//     `
-//     }
-//     recommendedTemplate() {
-//         if (!this.connectors.find(f => f.type === "WALLET_CONNECT"))
-//             return null;
-//         const { recommended: t } = lr.state
-//             , { customWallets: n, featuredWalletIds: i } = Ur.state
-//             , { connectors: s } = Xr.state
-//             , o = ls.getRecentWallets()
-//             , a = s.filter(f => f.type === "ANNOUNCED");
-//         if (i || n || !t.length)
-//             return null;
-//         const c = a.length + o.length
-//             , u = Math.max(0, 2 - c);
-//         return this.filterOutDuplicateWallets(t).slice(0, u).map(f => Ee`
-//         <wui-list-wallet
-//           imageSrc=${kr(Cn.getWalletImage(f))}
-//           name=${(f == null ? void 0 : f.name) ?? "Unknown"}
-//           @click=${() => this.onConnectWallet(f)}
-//         >
-//         </wui-list-wallet>
-//       `)
-//     }
-//     onConnector(e) {
-//         e.type === "WALLET_CONNECT" ? vt.isMobile() ? at.push("AllWallets") : at.push("ConnectingWalletConnect") : at.push("ConnectingExternal", {
-//             connector: e
-//         })
-//     }
-//     filterOutDuplicateWallets(e) {
-//         const { connectors: t } = Xr.state
-//             , i = ls.getRecentWallets().map(a => a.id)
-//             , s = t.map(a => {
-//                 var c;
-//                 return (c = a.info) == null ? void 0 : c.rdns
+//     isAllowedNetworkSwitch() {
+//         const { requestedCaipNetworks: e } = Tn.state
+//             , t = e ? e.length > 1 : !1
+//             , n = e == null ? void 0 : e.find(({ id: i }) => {
+//                 var s;
+//                 return i === ((s = this.network) == null ? void 0 : s.id)
 //             }
-//             ).filter(Boolean);
-//         return e.filter(a => !i.includes(a.id) && !s.includes(a.rdns ?? void 0))
+//             );
+//         return t || !n
 //     }
-//     onAllWallets() {
+//     onCopyAddress() {
+//         try {
+//             this.address && (vt.copyToClopboard(this.address),
+//                 Rn.showSuccess("Address copied"))
+//         } catch {
+//             Rn.showError("Failed to copy")
+//         }
+//     }
+//     onNetworks() {
+//         this.isAllowedNetworkSwitch() && at.push("Networks")
+//     }
+//     onTransactions() {
 //         Ft.sendEvent({
 //             type: "track",
-//             event: "CLICK_ALL_WALLETS"
+//             event: "CLICK_TRANSACTIONS"
 //         }),
-//             at.push("AllWallets")
+//             at.push("Transactions")
 //     }
-//     onConnectWallet(e) {
-//         at.push("ConnectingWalletConnect", {
-//             wallet: e
+//     async onDisconnect() {
+//         try {
+//             this.disconecting = !0,
+//                 await wr.disconnect(),
+//                 Ft.sendEvent({
+//                     type: "track",
+//                     event: "DISCONNECT_SUCCESS"
+//                 }),
+//                 en.close()
+//         } catch {
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "DISCONNECT_ERROR"
+//             }),
+//                 Rn.showError("Failed to disconnect")
+//         } finally {
+//             this.disconecting = !1
+//         }
+//     }
+//     onExplorer() {
+//         const { addressExplorerUrl: e } = Pr.state;
+//         e && vt.openHref(e, "_blank")
+//     }
+//     onGoToUpgradeView() {
+//         Ft.sendEvent({
+//             type: "track",
+//             event: "EMAIL_UPGRADE_FROM_MODAL"
+//         }),
+//             at.push("UpgradeEmailWallet")
+//     }
+//     onGoToUpdateEmail(e) {
+//         at.push("UpdateEmailWallet", {
+//             email: e
 //         })
 //     }
 // }
 //     ;
-// Gy.styles = YX;
-// ZO([it()], Gy.prototype, "connectors", void 0);
-// Gy = ZO([Pe("w3m-connect-view")], Gy);
-// const QX = fn`
+// // gc.styles = JX;
+// Tu([it()], gc.prototype, "address", void 0);
+// Tu([it()], gc.prototype, "profileImage", void 0);
+// Tu([it()], gc.prototype, "profileName", void 0);
+// Tu([it()], gc.prototype, "balance", void 0);
+// Tu([it()], gc.prototype, "balanceSymbol", void 0);
+// Tu([it()], gc.prototype, "network", void 0);
+// Tu([it()], gc.prototype, "disconecting", void 0);
+// gc = Tu([Pe("w3m-account-view")], gc);
+// var KO = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let gE = class extends Xt {
+//     constructor() {
+//         super(...arguments),
+//             this.search = "",
+//             this.onDebouncedSearch = vt.debounce(e => {
+//                 this.search = e
+//             }
+//             )
+//     }
+//     render() {
+//         const e = this.search.length >= 2;
+//         return Ee`
+//       <wui-flex padding="s" gap="s">
+//         <wui-search-bar @inputChange=${this.onInputChange.bind(this)}></wui-search-bar>
+//         ${this.qrButtonTemplate()}
+//       </wui-flex>
+//       ${e ? Ee`<w3m-all-wallets-search query=${this.search}></w3m-all-wallets-search>` : Ee`<w3m-all-wallets-list></w3m-all-wallets-list>`}
+//     `
+//     }
+//     onInputChange(e) {
+//         this.onDebouncedSearch(e.detail)
+//     }
+//     qrButtonTemplate() {
+//         return vt.isMobile() ? Ee`
+//         <wui-icon-box
+//           size="lg"
+//           iconSize="xl"
+//           iconColor="accent-100"
+//           backgroundColor="accent-100"
+//           icon="qrCode"
+//           background="transparent"
+//           border
+//           borderColor="wui-accent-glass-010"
+//           @click=${this.onWalletConnectQr.bind(this)}
+//         ></wui-icon-box>
+//       ` : null
+//     }
+//     onWalletConnectQr() {
+//         at.push("ConnectingWalletConnect")
+//     }
+// }
+//     ;
+// KO([it()], gE.prototype, "search", void 0);
+// gE = KO([Pe("w3m-all-wallets-view")], gE);
+// const YX = fn`
+//   wui-flex {
+//     max-height: clamp(360px, 540px, 80vh);
+//     overflow: scroll;
+//     scrollbar-width: none;
+//   }
+
+//   wui-flex::-webkit-scrollbar {
+//     display: none;
+//   }
+// `;
+// var ZO = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// // let Gy = class extends Xt {
+// //     constructor() {
+// //         super(),
+// //             this.unsubscribe = [],
+// //             this.connectors = Xr.state.connectors,
+// //             this.unsubscribe.push(Xr.subscribeKey("connectors", e => this.connectors = e))
+// //     }
+// //     disconnectedCallback() {
+// //         this.unsubscribe.forEach(e => e())
+// //     }
+// //     render() {
+// //         return Ee`
+// //       <wui-flex flexDirection="column" padding="s" gap="xs">
+// //         <w3m-email-login-widget></w3m-email-login-widget>
+
+// //         ${this.walletConnectConnectorTemplate()} ${this.recentTemplate()}
+// //         ${this.announcedTemplate()} ${this.injectedTemplate()} ${this.featuredTemplate()}
+// //         ${this.customTemplate()} ${this.recommendedTemplate()} ${this.connectorsTemplate()}
+// //         ${this.allWalletsTemplate()}
+// //       </wui-flex>
+// //       <w3m-legal-footer></w3m-legal-footer>
+// //     `
+// //     }
+// //     walletConnectConnectorTemplate() {
+// //         if (vt.isMobile())
+// //             return null;
+// //         const e = this.connectors.find(t => t.type === "WALLET_CONNECT");
+// //         return e ? Ee`
+// //       <wui-list-wallet
+// //         imageSrc=${kr(Cn.getConnectorImage(e))}
+// //         name=${e.name ?? "Unknown"}
+// //         @click=${() => this.onConnector(e)}
+// //         tagLabel="qr code"
+// //         tagVariant="main"
+// //         data-testid="wallet-selector-walletconnect"
+// //       >
+// //       </wui-list-wallet>
+// //     ` : null
+// //     }
+// //     customTemplate() {
+// //         const { customWallets: e } = Ur.state;
+// //         return e != null && e.length ? this.filterOutDuplicateWallets(e).map(n => Ee`
+// //         <wui-list-wallet
+// //           imageSrc=${kr(Cn.getWalletImage(n))}
+// //           name=${n.name ?? "Unknown"}
+// //           @click=${() => this.onConnectWallet(n)}
+// //         >
+// //         </wui-list-wallet>
+// //       `) : null
+// //     }
+// //     featuredTemplate() {
+// //         if (!this.connectors.find(i => i.type === "WALLET_CONNECT"))
+// //             return null;
+// //         const { featured: t } = lr.state;
+// //         return t.length ? this.filterOutDuplicateWallets(t).map(i => Ee`
+// //         <wui-list-wallet
+// //           imageSrc=${kr(Cn.getWalletImage(i))}
+// //           name=${i.name ?? "Unknown"}
+// //           @click=${() => this.onConnectWallet(i)}
+// //         >
+// //         </wui-list-wallet>
+// //       `) : null
+// //     }
+// //     recentTemplate() {
+// //         return ls.getRecentWallets().map(t => Ee`
+// //         <wui-list-wallet
+// //           imageSrc=${kr(Cn.getWalletImage(t))}
+// //           name=${t.name ?? "Unknown"}
+// //           @click=${() => this.onConnectWallet(t)}
+// //           tagLabel="recent"
+// //           tagVariant="shade"
+// //         >
+// //         </wui-list-wallet>
+// //       `)
+// //     }
+// //     announcedTemplate() {
+// //         return this.connectors.map(e => e.type !== "ANNOUNCED" ? null : Ee`
+// //         <wui-list-wallet
+// //           imageSrc=${kr(Cn.getConnectorImage(e))}
+// //           name=${e.name ?? "Unknown"}
+// //           @click=${() => this.onConnector(e)}
+// //           tagVariant="success"
+// //           .installed=${!0}
+// //         >
+// //         </wui-list-wallet>
+// //       `)
+// //     }
+// //     injectedTemplate() {
+// //         const e = this.connectors.find(t => t.type === "ANNOUNCED");
+// //         return this.connectors.map(t => t.type !== "INJECTED" || !wr.checkInstalled() ? null : Ee`
+// //         <wui-list-wallet
+// //           imageSrc=${kr(Cn.getConnectorImage(t))}
+// //           .installed=${!!e}
+// //           name=${t.name ?? "Unknown"}
+// //           @click=${() => this.onConnector(t)}
+// //         >
+// //         </wui-list-wallet>
+// //       `)
+// //     }
+// //     connectorsTemplate() {
+// //         const e = Xr.getAnnouncedConnectorRdns();
+// //         return this.connectors.map(t => ["WALLET_CONNECT", "INJECTED", "ANNOUNCED", "EMAIL"].includes(t.type) || e.includes(tl.CONNECTOR_RDNS_MAP[t.id]) ? null : Ee`
+// //         <wui-list-wallet
+// //           imageSrc=${kr(Cn.getConnectorImage(t))}
+// //           name=${t.name ?? "Unknown"}
+// //           @click=${() => this.onConnector(t)}
+// //         >
+// //         </wui-list-wallet>
+// //       `)
+// //     }
+// //     allWalletsTemplate() {
+// //         if (!this.connectors.find(a => a.type === "WALLET_CONNECT"))
+// //             return null;
+// //         const t = lr.state.count
+// //             , n = lr.state.featured.length
+// //             , i = t + n
+// //             , s = i < 10 ? i : Math.floor(i / 10) * 10
+// //             , o = s < i ? `${s}+` : `${s}`;
+// //         return Ee`
+// //       <wui-list-wallet
+// //         name="All Wallets"
+// //         walletIcon="allWallets"
+// //         showAllWallets
+// //         @click=${this.onAllWallets.bind(this)}
+// //         tagLabel=${o}
+// //         tagVariant="shade"
+// //         data-testid="all-wallets"
+// //       ></wui-list-wallet>
+// //     `
+// //     }
+// //     recommendedTemplate() {
+// //         if (!this.connectors.find(f => f.type === "WALLET_CONNECT"))
+// //             return null;
+// //         const { recommended: t } = lr.state
+// //             , { customWallets: n, featuredWalletIds: i } = Ur.state
+// //             , { connectors: s } = Xr.state
+// //             , o = ls.getRecentWallets()
+// //             , a = s.filter(f => f.type === "ANNOUNCED");
+// //         if (i || n || !t.length)
+// //             return null;
+// //         const c = a.length + o.length
+// //             , u = Math.max(0, 2 - c);
+// //         return this.filterOutDuplicateWallets(t).slice(0, u).map(f => Ee`
+// //         <wui-list-wallet
+// //           imageSrc=${kr(Cn.getWalletImage(f))}
+// //           name=${(f == null ? void 0 : f.name) ?? "Unknown"}
+// //           @click=${() => this.onConnectWallet(f)}
+// //         >
+// //         </wui-list-wallet>
+// //       `)
+// //     }
+// //     onConnector(e) {
+// //         e.type === "WALLET_CONNECT" ? vt.isMobile() ? at.push("AllWallets") : at.push("ConnectingWalletConnect") : at.push("ConnectingExternal", {
+// //             connector: e
+// //         })
+// //     }
+// //     filterOutDuplicateWallets(e) {
+// //         const { connectors: t } = Xr.state
+// //             , i = ls.getRecentWallets().map(a => a.id)
+// //             , s = t.map(a => {
+// //                 var c;
+// //                 return (c = a.info) == null ? void 0 : c.rdns
+// //             }
+// //             ).filter(Boolean);
+// //         return e.filter(a => !i.includes(a.id) && !s.includes(a.rdns ?? void 0))
+// //     }
+// //     onAllWallets() {
+// //         Ft.sendEvent({
+// //             type: "track",
+// //             event: "CLICK_ALL_WALLETS"
+// //         }),
+// //             at.push("AllWallets")
+// //     }
+// //     onConnectWallet(e) {
+// //         at.push("ConnectingWalletConnect", {
+// //             wallet: e
+// //         })
+// //     }
+// // }
+// //     ;
+// // Gy.styles = YX;
+// // ZO([it()], Gy.prototype, "connectors", void 0);
+// // Gy = ZO([Pe("w3m-connect-view")], Gy);
+// // const QX = fn`
+// //   @keyframes shake {
+// //     0% {
+// //       transform: translateX(0);
+// //     }
+// //     25% {
+// //       transform: translateX(3px);
+// //     }
+// //     50% {
+// //       transform: translateX(-3px);
+// //     }
+// //     75% {
+// //       transform: translateX(3px);
+// //     }
+// //     100% {
+// //       transform: translateX(0);
+// //     }
+// //   }
+
+// //   wui-flex:first-child:not(:only-child) {
+// //     position: relative;
+// //   }
+
+// //   wui-loading-thumbnail {
+// //     position: absolute;
+// //   }
+
+// //   wui-icon-box {
+// //     position: absolute;
+// //     right: calc(var(--wui-spacing-3xs) * -1);
+// //     bottom: calc(var(--wui-spacing-3xs) * -1);
+// //     opacity: 0;
+// //     transform: scale(0.5);
+// //     transition: all var(--wui-ease-out-power-2) var(--wui-duration-lg);
+// //   }
+
+// //   wui-text[align='center'] {
+// //     width: 100%;
+// //     padding: 0px var(--wui-spacing-l);
+// //   }
+
+// //   [data-error='true'] wui-icon-box {
+// //     opacity: 1;
+// //     transform: scale(1);
+// //   }
+
+// //   [data-error='true'] > wui-flex:first-child {
+// //     animation: shake 250ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+// //   }
+
+// //   [data-retry='false'] wui-link {
+// //     display: none;
+// //   }
+
+// //   [data-retry='true'] wui-link {
+// //     display: block;
+// //     opacity: 1;
+// //   }
+// // `;
+// var lh = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// class $s extends Xt {
+//     constructor() {
+//         var e, t, n, i;
+//         super(),
+//             this.wallet = (e = at.state.data) == null ? void 0 : e.wallet,
+//             this.connector = (t = at.state.data) == null ? void 0 : t.connector,
+//             this.timeout = void 0,
+//             this.secondaryBtnLabel = "Try again",
+//             this.secondaryBtnIcon = "refresh",
+//             this.secondaryLabel = "Accept connection request in the wallet",
+//             this.onConnect = void 0,
+//             this.onRender = void 0,
+//             this.onAutoConnect = void 0,
+//             this.isWalletConnect = !0,
+//             this.unsubscribe = [],
+//             this.imageSrc = Cn.getWalletImage(this.wallet) ?? Cn.getConnectorImage(this.connector),
+//             this.name = ((n = this.wallet) == null ? void 0 : n.name) ?? ((i = this.connector) == null ? void 0 : i.name) ?? "Wallet",
+//             this.isRetrying = !1,
+//             this.uri = wr.state.wcUri,
+//             this.error = wr.state.wcError,
+//             this.ready = !1,
+//             this.showRetry = !1,
+//             this.buffering = !1,
+//             this.isMobile = !1,
+//             this.onRetry = void 0,
+//             this.unsubscribe.push(wr.subscribeKey("wcUri", s => {
+//                 var o;
+//                 this.uri = s,
+//                     this.isRetrying && this.onRetry && (this.isRetrying = !1,
+//                         (o = this.onConnect) == null || o.call(this))
+//             }
+//             ), wr.subscribeKey("wcError", s => this.error = s), wr.subscribeKey("buffering", s => this.buffering = s))
+//     }
+//     firstUpdated() {
+//         var e;
+//         (e = this.onAutoConnect) == null || e.call(this),
+//             this.showRetry = !this.onAutoConnect
+//     }
+//     disconnectedCallback() {
+//         this.unsubscribe.forEach(e => e()),
+//             clearTimeout(this.timeout)
+//     }
+//     render() {
+//         var n;
+//         (n = this.onRender) == null || n.call(this),
+//             this.onShowRetry();
+//         const e = this.error ? "Connection can be declined if a previous request is still active" : this.secondaryLabel;
+//         let t = `Continue in ${this.name}`;
+//         return this.buffering && (t = "Connecting..."),
+//             this.error && (t = "Connection declined"),
+//             Ee`
+//       <wui-flex
+//         data-error=${kr(this.error)}
+//         data-retry=${this.showRetry}
+//         flexDirection="column"
+//         alignItems="center"
+//         .padding=${["3xl", "xl", "xl", "xl"]}
+//         gap="xl"
+//       >
+//         <wui-flex justifyContent="center" alignItems="center">
+//           <wui-wallet-image size="lg" imageSrc=${kr(this.imageSrc)}></wui-wallet-image>
+
+//           ${this.error ? null : this.loaderTemplate()}
+
+//           <wui-icon-box
+//             backgroundColor="error-100"
+//             background="opaque"
+//             iconColor="error-100"
+//             icon="close"
+//             size="sm"
+//             border
+//             borderColor="wui-color-bg-125"
+//           ></wui-icon-box>
+//         </wui-flex>
+
+//         <wui-flex flexDirection="column" alignItems="center" gap="xs">
+//           <wui-text variant="paragraph-500" color=${this.error ? "error-100" : "fg-100"}>
+//             ${t}
+//           </wui-text>
+//           <wui-text align="center" variant="small-500" color="fg-200">${e}</wui-text>
+//         </wui-flex>
+
+//         <wui-button
+//           variant="accent"
+//           ?disabled=${!this.error && this.buffering}
+//           @click=${this.onTryAgain.bind(this)}
+//         >
+//           <wui-icon color="inherit" slot="iconLeft" name=${this.secondaryBtnIcon}></wui-icon>
+//           ${this.secondaryBtnLabel}
+//         </wui-button>
+//       </wui-flex>
+
+//       ${this.isWalletConnect ? Ee`
+//             <wui-flex .padding=${["0", "xl", "xl", "xl"]} justifyContent="center">
+//               <wui-link @click=${this.onCopyUri} color="fg-200">
+//                 <wui-icon size="xs" color="fg-200" slot="iconLeft" name="copy"></wui-icon>
+//                 Copy link
+//               </wui-link>
+//             </wui-flex>
+//           ` : null}
+
+//       <w3m-mobile-download-links .wallet=${this.wallet}></w3m-mobile-download-links>
+//     `
+//     }
+//     onShowRetry() {
+//         var e;
+//         if (this.error && !this.showRetry) {
+//             this.showRetry = !0;
+//             const t = (e = this.shadowRoot) == null ? void 0 : e.querySelector("wui-button");
+//             t == null || t.animate([{
+//                 opacity: 0
+//             }, {
+//                 opacity: 1
+//             }], {
+//                 fill: "forwards",
+//                 easing: "ease"
+//             })
+//         }
+//     }
+//     onTryAgain() {
+//         var e, t;
+//         this.buffering || (wr.setWcError(!1),
+//             this.onRetry ? (this.isRetrying = !0,
+//                 (e = this.onRetry) == null || e.call(this)) : (t = this.onConnect) == null || t.call(this))
+//     }
+//     loaderTemplate() {
+//         const e = Rs.state.themeVariables["--w3m-border-radius-master"]
+//             , t = e ? parseInt(e.replace("px", ""), 10) : 4;
+//         return Ee`<wui-loading-thumbnail radius=${t * 9}></wui-loading-thumbnail>`
+//     }
+//     onCopyUri() {
+//         try {
+//             this.uri && (vt.copyToClopboard(this.uri),
+//                 Rn.showSuccess("Link copied"))
+//         } catch {
+//             Rn.showError("Failed to copy")
+//         }
+//     }
+// }
+// // $s.styles = QX;
+// lh([it()], $s.prototype, "uri", void 0);
+// lh([it()], $s.prototype, "error", void 0);
+// lh([it()], $s.prototype, "ready", void 0);
+// lh([it()], $s.prototype, "showRetry", void 0);
+// lh([it()], $s.prototype, "buffering", void 0);
+// lh([En({
+//     type: Boolean
+// })], $s.prototype, "isMobile", void 0);
+// lh([En()], $s.prototype, "onRetry", void 0);
+// var XX = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// const eee = {
+//     INJECTED: "browser",
+//     ANNOUNCED: "browser"
+// };
+// let DC = class extends $s {
+//     constructor() {
+//         if (super(),
+//             !this.connector)
+//             throw new Error("w3m-connecting-view: No connector provided");
+//         Ft.sendEvent({
+//             type: "track",
+//             event: "SELECT_WALLET",
+//             properties: {
+//                 name: this.connector.name ?? "Unknown",
+//                 platform: eee[this.connector.type] ?? "external"
+//             }
+//         }),
+//             this.onConnect = this.onConnectProxy.bind(this),
+//             this.onAutoConnect = this.onConnectProxy.bind(this),
+//             this.isWalletConnect = !1
+//     }
+//     async onConnectProxy() {
+//         try {
+//             this.error = !1,
+//                 this.connector && (this.connector.imageUrl && ls.setConnectedWalletImageUrl(this.connector.imageUrl),
+//                     await wr.connectExternal(this.connector),
+//                     jn.state.isSiweEnabled ? at.push("ConnectingSiwe") : en.close(),
+//                     Ft.sendEvent({
+//                         type: "track",
+//                         event: "CONNECT_SUCCESS",
+//                         properties: {
+//                             method: "external"
+//                         }
+//                     }))
+//         } catch (e) {
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "CONNECT_ERROR",
+//                 properties: {
+//                     message: (e == null ? void 0 : e.message) ?? "Unknown"
+//                 }
+//             }),
+//                 this.error = !0
+//         }
+//     }
+// }
+//     ;
+// DC = XX([Pe("w3m-connecting-external-view")], DC);
+// var JO = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let mE = class extends Xt {
+//     constructor() {
+//         var e;
+//         super(...arguments),
+//             this.dappName = (e = Ur.state.metadata) == null ? void 0 : e.name,
+//             this.isSigning = !1
+//     }
+//     render() {
+//         return Ee`
+//       <wui-flex justifyContent="center" .padding=${["2xl", "0", "xxl", "0"]}>
+//         <w3m-connecting-siwe></w3m-connecting-siwe>
+//       </wui-flex>
+//       <wui-flex
+//         .padding=${["0", "4xl", "l", "4xl"]}
+//         gap="s"
+//         justifyContent="space-between"
+//       >
+//         <wui-text variant="paragraph-500" align="center" color="fg-100"
+//           >${this.dappName ?? "Dapp"} needs to connect to your wallet</wui-text
+//         >
+//       </wui-flex>
+//       <wui-flex
+//         .padding=${["0", "3xl", "l", "3xl"]}
+//         gap="s"
+//         justifyContent="space-between"
+//       >
+//         <wui-text variant="small-400" align="center" color="fg-200"
+//           >Sign this message to prove you own this wallet and proceed. Canceling will disconnect
+//           you.</wui-text
+//         >
+//       </wui-flex>
+//       <wui-flex .padding=${["l", "xl", "xl", "xl"]} gap="s" justifyContent="space-between">
+//         <wui-button
+//           size="md"
+//           ?fullwidth=${!0}
+//           variant="shade"
+//           @click=${this.onCancel.bind(this)}
+//           data-testid="w3m-connecting-siwe-cancel"
+//         >
+//           Cancel
+//         </wui-button>
+//         <wui-button
+//           size="md"
+//           ?fullwidth=${!0}
+//           variant="fill"
+//           @click=${this.onSign.bind(this)}
+//           ?loading=${this.isSigning}
+//           data-testid="w3m-connecting-siwe-sign"
+//         >
+//           ${this.isSigning ? "Signing..." : "Sign"}
+//         </wui-button>
+//       </wui-flex>
+//     `
+//     }
+//     async onSign() {
+//         this.isSigning = !0,
+//             Ft.sendEvent({
+//                 event: "CLICK_SIGN_SIWE_MESSAGE",
+//                 type: "track"
+//             });
+//         try {
+//             jn.setStatus("loading");
+//             const e = await jn.signIn();
+//             return jn.setStatus("success"),
+//                 Ft.sendEvent({
+//                     event: "SIWE_AUTH_SUCCESS",
+//                     type: "track"
+//                 }),
+//                 e
+//         } catch {
+//             return Rn.showError("Signature declined"),
+//                 jn.setStatus("error"),
+//                 Ft.sendEvent({
+//                     event: "SIWE_AUTH_ERROR",
+//                     type: "track"
+//                 })
+//         } finally {
+//             this.isSigning = !1
+//         }
+//     }
+//     async onCancel() {
+//         const { isConnected: e } = Pr.state;
+//         e ? (await wr.disconnect(),
+//             en.close()) : at.push("Connect"),
+//             Ft.sendEvent({
+//                 event: "CLICK_CANCEL_SIWE",
+//                 type: "track"
+//             })
+//     }
+// }
+//     ;
+// JO([it()], mE.prototype, "isSigning", void 0);
+// mE = JO([Pe("w3m-connecting-siwe-view")], mE);
+// var h6 = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let Ky = class extends Xt {
+//     constructor() {
+//         var e;
+//         super(),
+//             this.interval = void 0,
+//             this.lastRetry = Date.now(),
+//             this.wallet = (e = at.state.data) == null ? void 0 : e.wallet,
+//             this.platform = void 0,
+//             this.platforms = [],
+//             this.initializeConnection(),
+//             this.interval = setInterval(this.initializeConnection.bind(this), tl.TEN_SEC_MS)
+//     }
+//     disconnectedCallback() {
+//         clearTimeout(this.interval)
+//     }
+//     render() {
+//         return this.wallet ? (this.determinePlatforms(),
+//             Ee`
+//       ${this.headerTemplate()}
+//       <div>${this.platformTemplate()}</div>
+//     `) : Ee`<w3m-connecting-wc-qrcode></w3m-connecting-wc-qrcode>`
+//     }
+//     async initializeConnection(e = !1) {
+//         try {
+//             const { wcPairingExpiry: t } = wr.state;
+//             if (e || vt.isPairingExpired(t)) {
+//                 if (wr.connectWalletConnect(),
+//                     this.wallet) {
+//                     const n = Cn.getWalletImage(this.wallet);
+//                     n && ls.setConnectedWalletImageUrl(n)
+//                 } else {
+//                     const i = Xr.state.connectors.find(o => o.type === "WALLET_CONNECT")
+//                         , s = Cn.getConnectorImage(i);
+//                     s && ls.setConnectedWalletImageUrl(s)
+//                 }
+//                 await wr.state.wcPromise,
+//                     this.finalizeConnection(),
+//                     jn.state.isSiweEnabled ? at.push("ConnectingSiwe") : en.close()
+//             }
+//         } catch (t) {
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "CONNECT_ERROR",
+//                 properties: {
+//                     message: (t == null ? void 0 : t.message) ?? "Unknown"
+//                 }
+//             }),
+//                 wr.setWcError(!0),
+//                 vt.isAllowedRetry(this.lastRetry) && (Rn.showError("Declined"),
+//                     this.lastRetry = Date.now(),
+//                     this.initializeConnection(!0))
+//         }
+//     }
+//     finalizeConnection() {
+//         const { wcLinking: e, recentWallet: t } = wr.state;
+//         e && ls.setWalletConnectDeepLink(e),
+//             t && ls.setWeb3ModalRecent(t),
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "CONNECT_SUCCESS",
+//                 properties: {
+//                     method: e ? "mobile" : "qrcode"
+//                 }
+//             })
+//     }
+//     determinePlatforms() {
+//         if (!this.wallet)
+//             throw new Error("w3m-connecting-wc-view:determinePlatforms No wallet");
+//         if (this.platform)
+//             return;
+//         const { mobile_link: e, desktop_link: t, webapp_link: n, injected: i, rdns: s } = this.wallet
+//             , o = i == null ? void 0 : i.map(({ injected_id: y }) => y).filter(Boolean)
+//             , a = s ? [s] : o ?? []
+//             , c = a.length
+//             , u = e
+//             , d = n
+//             , f = wr.checkInstalled(a)
+//             , p = c && f
+//             , m = t && !vt.isMobile();
+//         p && this.platforms.push("browser"),
+//             u && this.platforms.push(vt.isMobile() ? "mobile" : "qrcode"),
+//             d && this.platforms.push("web"),
+//             m && this.platforms.push("desktop"),
+//             !p && c && this.platforms.push("unsupported"),
+//             this.platform = this.platforms[0]
+//     }
+//     platformTemplate() {
+//         switch (this.platform) {
+//             case "browser":
+//                 return Ee`<w3m-connecting-wc-browser></w3m-connecting-wc-browser>`;
+//             case "desktop":
+//                 return Ee`
+//           <w3m-connecting-wc-desktop .onRetry=${() => this.initializeConnection(!0)}>
+//           </w3m-connecting-wc-desktop>
+//         `;
+//             case "web":
+//                 return Ee`
+//           <w3m-connecting-wc-web .onRetry=${() => this.initializeConnection(!0)}>
+//           </w3m-connecting-wc-web>
+//         `;
+//             case "mobile":
+//                 return Ee`
+//           <w3m-connecting-wc-mobile isMobile .onRetry=${() => this.initializeConnection(!0)}>
+//           </w3m-connecting-wc-mobile>
+//         `;
+//             case "qrcode":
+//                 return Ee`<w3m-connecting-wc-qrcode></w3m-connecting-wc-qrcode>`;
+//             default:
+//                 return Ee`<w3m-connecting-wc-unsupported></w3m-connecting-wc-unsupported>`
+//         }
+//     }
+//     headerTemplate() {
+//         return this.platforms.length > 1 ? Ee`
+//       <w3m-connecting-header
+//         .platforms=${this.platforms}
+//         .onSelectPlatfrom=${this.onSelectPlatform.bind(this)}
+//       >
+//       </w3m-connecting-header>
+//     ` : null
+//     }
+//     async onSelectPlatform(e) {
+//         var n;
+//         const t = (n = this.shadowRoot) == null ? void 0 : n.querySelector("div");
+//         t && (await t.animate([{
+//             opacity: 1
+//         }, {
+//             opacity: 0
+//         }], {
+//             duration: 200,
+//             fill: "forwards",
+//             easing: "ease"
+//         }).finished,
+//             this.platform = e,
+//             t.animate([{
+//                 opacity: 0
+//             }, {
+//                 opacity: 1
+//             }], {
+//                 duration: 200,
+//                 fill: "forwards",
+//                 easing: "ease"
+//             }))
+//     }
+// }
+//     ;
+// h6([it()], Ky.prototype, "platform", void 0);
+// h6([it()], Ky.prototype, "platforms", void 0);
+// Ky = h6([Pe("w3m-connecting-wc-view")], Ky);
+// var tee = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let LC = class extends Xt {
+//     constructor() {
+//         var e;
+//         super(...arguments),
+//             this.wallet = (e = at.state.data) == null ? void 0 : e.wallet
+//     }
+//     render() {
+//         if (!this.wallet)
+//             throw new Error("w3m-downloads-view");
+//         return Ee`
+//       <wui-flex gap="xs" flexDirection="column" .padding=${["s", "s", "l", "s"]}>
+//         ${this.chromeTemplate()} ${this.iosTemplate()} ${this.androidTemplate()}
+//         ${this.homepageTemplate()}
+//       </wui-flex>
+//     `
+//     }
+//     chromeTemplate() {
+//         var e;
+//         return (e = this.wallet) != null && e.chrome_store ? Ee`<wui-list-item
+//       variant="icon"
+//       icon="chromeStore"
+//       iconVariant="square"
+//       @click=${this.onChromeStore.bind(this)}
+//       chevron
+//     >
+//       <wui-text variant="paragraph-500" color="fg-100">Chrome Extension</wui-text>
+//     </wui-list-item>` : null
+//     }
+//     iosTemplate() {
+//         var e;
+//         return (e = this.wallet) != null && e.app_store ? Ee`<wui-list-item
+//       variant="icon"
+//       icon="appStore"
+//       iconVariant="square"
+//       @click=${this.onAppStore.bind(this)}
+//       chevron
+//     >
+//       <wui-text variant="paragraph-500" color="fg-100">iOS App</wui-text>
+//     </wui-list-item>` : null
+//     }
+//     androidTemplate() {
+//         var e;
+//         return (e = this.wallet) != null && e.play_store ? Ee`<wui-list-item
+//       variant="icon"
+//       icon="playStore"
+//       iconVariant="square"
+//       @click=${this.onPlayStore.bind(this)}
+//       chevron
+//     >
+//       <wui-text variant="paragraph-500" color="fg-100">Android App</wui-text>
+//     </wui-list-item>` : null
+//     }
+//     homepageTemplate() {
+//         var e;
+//         return (e = this.wallet) != null && e.homepage ? Ee`
+//       <wui-list-item
+//         variant="icon"
+//         icon="browser"
+//         iconVariant="square-blue"
+//         @click=${this.onHomePage.bind(this)}
+//         chevron
+//       >
+//         <wui-text variant="paragraph-500" color="fg-100">Website</wui-text>
+//       </wui-list-item>
+//     ` : null
+//     }
+//     onChromeStore() {
+//         var e;
+//         (e = this.wallet) != null && e.chrome_store && vt.openHref(this.wallet.chrome_store, "_blank")
+//     }
+//     onAppStore() {
+//         var e;
+//         (e = this.wallet) != null && e.app_store && vt.openHref(this.wallet.app_store, "_blank")
+//     }
+//     onPlayStore() {
+//         var e;
+//         (e = this.wallet) != null && e.play_store && vt.openHref(this.wallet.play_store, "_blank")
+//     }
+//     onHomePage() {
+//         var e;
+//         (e = this.wallet) != null && e.homepage && vt.openHref(this.wallet.homepage, "_blank")
+//     }
+// }
+//     ;
+// LC = tee([Pe("w3m-downloads-view")], LC);
+// var ree = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// const nee = "https://walletconnect.com/explorer";
+// let BC = class extends Xt {
+//     render() {
+//         return Ee`
+//       <wui-flex flexDirection="column" padding="s" gap="xs">
+//         ${this.recommendedWalletsTemplate()}
+//         <wui-list-wallet
+//           name="Explore all"
+//           showAllWallets
+//           walletIcon="allWallets"
+//           icon="externalLink"
+//           @click=${() => {
+//                 vt.openHref("https://walletconnect.com/explorer?type=wallet", "_blank")
+//             }
+//             }
+//         ></wui-list-wallet>
+//       </wui-flex>
+//     `
+//     }
+//     recommendedWalletsTemplate() {
+//         const { recommended: e, featured: t } = lr.state
+//             , { customWallets: n } = Ur.state;
+//         return [...t, ...n ?? [], ...e].slice(0, 4).map(s => Ee`
+//         <wui-list-wallet
+//           name=${s.name ?? "Unknown"}
+//           tagVariant="main"
+//           imageSrc=${kr(Cn.getWalletImage(s))}
+//           @click=${() => {
+//                 vt.openHref(s.homepage ?? nee, "_blank")
+//             }
+//             }
+//         ></wui-list-wallet>
+//       `)
+//     }
+// }
+//     ;
+// BC = ree([Pe("w3m-get-wallet-view")], BC);
+// const iee = fn`
 //   @keyframes shake {
 //     0% {
 //       transform: translateX(0);
@@ -30044,22 +30723,22 @@ var ZO = function (r, e, t, n) {
 //     position: relative;
 //   }
 
-//   wui-loading-thumbnail {
+//   wui-loading-hexagon {
 //     position: absolute;
 //   }
 
 //   wui-icon-box {
 //     position: absolute;
-//     right: calc(var(--wui-spacing-3xs) * -1);
-//     bottom: calc(var(--wui-spacing-3xs) * -1);
+//     right: 4px;
+//     bottom: 0;
 //     opacity: 0;
 //     transform: scale(0.5);
+//     z-index: 1;
 //     transition: all var(--wui-ease-out-power-2) var(--wui-duration-lg);
 //   }
 
-//   wui-text[align='center'] {
-//     width: 100%;
-//     padding: 0px var(--wui-spacing-l);
+//   wui-button {
+//     display: none;
 //   }
 
 //   [data-error='true'] wui-icon-box {
@@ -30071,6274 +30750,5595 @@ var ZO = function (r, e, t, n) {
 //     animation: shake 250ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 //   }
 
-//   [data-retry='false'] wui-link {
-//     display: none;
-//   }
-
-//   [data-retry='true'] wui-link {
+//   wui-button[data-retry='true'] {
 //     display: block;
 //     opacity: 1;
 //   }
 // `;
-var lh = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-class $s extends Xt {
-    constructor() {
-        var e, t, n, i;
-        super(),
-            this.wallet = (e = at.state.data) == null ? void 0 : e.wallet,
-            this.connector = (t = at.state.data) == null ? void 0 : t.connector,
-            this.timeout = void 0,
-            this.secondaryBtnLabel = "Try again",
-            this.secondaryBtnIcon = "refresh",
-            this.secondaryLabel = "Accept connection request in the wallet",
-            this.onConnect = void 0,
-            this.onRender = void 0,
-            this.onAutoConnect = void 0,
-            this.isWalletConnect = !0,
-            this.unsubscribe = [],
-            this.imageSrc = Cn.getWalletImage(this.wallet) ?? Cn.getConnectorImage(this.connector),
-            this.name = ((n = this.wallet) == null ? void 0 : n.name) ?? ((i = this.connector) == null ? void 0 : i.name) ?? "Wallet",
-            this.isRetrying = !1,
-            this.uri = wr.state.wcUri,
-            this.error = wr.state.wcError,
-            this.ready = !1,
-            this.showRetry = !1,
-            this.buffering = !1,
-            this.isMobile = !1,
-            this.onRetry = void 0,
-            this.unsubscribe.push(wr.subscribeKey("wcUri", s => {
-                var o;
-                this.uri = s,
-                    this.isRetrying && this.onRetry && (this.isRetrying = !1,
-                        (o = this.onConnect) == null || o.call(this))
-            }
-            ), wr.subscribeKey("wcError", s => this.error = s), wr.subscribeKey("buffering", s => this.buffering = s))
-    }
-    firstUpdated() {
-        var e;
-        (e = this.onAutoConnect) == null || e.call(this),
-            this.showRetry = !this.onAutoConnect
-    }
-    disconnectedCallback() {
-        this.unsubscribe.forEach(e => e()),
-            clearTimeout(this.timeout)
-    }
-    render() {
-        var n;
-        (n = this.onRender) == null || n.call(this),
-            this.onShowRetry();
-        const e = this.error ? "Connection can be declined if a previous request is still active" : this.secondaryLabel;
-        let t = `Continue in ${this.name}`;
-        return this.buffering && (t = "Connecting..."),
-            this.error && (t = "Connection declined"),
-            Ee`
-      <wui-flex
-        data-error=${kr(this.error)}
-        data-retry=${this.showRetry}
-        flexDirection="column"
-        alignItems="center"
-        .padding=${["3xl", "xl", "xl", "xl"]}
-        gap="xl"
-      >
-        <wui-flex justifyContent="center" alignItems="center">
-          <wui-wallet-image size="lg" imageSrc=${kr(this.imageSrc)}></wui-wallet-image>
+// var d6 = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let qg = class extends Xt {
+//     constructor() {
+//         var e;
+//         super(),
+//             this.network = (e = at.state.data) == null ? void 0 : e.network,
+//             this.unsubscribe = [],
+//             this.showRetry = !1,
+//             this.error = !1
+//     }
+//     disconnectedCallback() {
+//         this.unsubscribe.forEach(e => e())
+//     }
+//     firstUpdated() {
+//         this.onSwitchNetwork()
+//     }
+//     render() {
+//         if (!this.network)
+//             throw new Error("w3m-network-switch-view: No network provided");
+//         this.onShowRetry();
+//         const e = this.error ? "Switch declined" : "Approve in wallet"
+//             , t = this.error ? "Switch can be declined if chain is not supported by a wallet or previous request is still active" : "Accept connection request in your wallet";
+//         return Ee`
+//       <wui-flex
+//         data-error=${this.error}
+//         flexDirection="column"
+//         alignItems="center"
+//         .padding=${["3xl", "xl", "3xl", "xl"]}
+//         gap="xl"
+//       >
+//         <wui-flex justifyContent="center" alignItems="center">
+//           <wui-network-image
+//             size="lg"
+//             imageSrc=${kr(Cn.getNetworkImage(this.network))}
+//           ></wui-network-image>
 
-          ${this.error ? null : this.loaderTemplate()}
+//           ${this.error ? null : Ee`<wui-loading-hexagon></wui-loading-hexagon>`}
 
-          <wui-icon-box
-            backgroundColor="error-100"
-            background="opaque"
-            iconColor="error-100"
-            icon="close"
-            size="sm"
-            border
-            borderColor="wui-color-bg-125"
-          ></wui-icon-box>
-        </wui-flex>
+//           <wui-icon-box
+//             backgroundColor="error-100"
+//             background="opaque"
+//             iconColor="error-100"
+//             icon="close"
+//             size="sm"
+//             ?border=${!0}
+//             borderColor="wui-color-bg-125"
+//           ></wui-icon-box>
+//         </wui-flex>
 
-        <wui-flex flexDirection="column" alignItems="center" gap="xs">
-          <wui-text variant="paragraph-500" color=${this.error ? "error-100" : "fg-100"}>
-            ${t}
-          </wui-text>
-          <wui-text align="center" variant="small-500" color="fg-200">${e}</wui-text>
-        </wui-flex>
+//         <wui-flex flexDirection="column" alignItems="center" gap="xs">
+//           <wui-text align="center" variant="paragraph-500" color="fg-100">${e}</wui-text>
+//           <wui-text align="center" variant="small-500" color="fg-200">${t}</wui-text>
+//         </wui-flex>
 
-        <wui-button
-          variant="accent"
-          ?disabled=${!this.error && this.buffering}
-          @click=${this.onTryAgain.bind(this)}
-        >
-          <wui-icon color="inherit" slot="iconLeft" name=${this.secondaryBtnIcon}></wui-icon>
-          ${this.secondaryBtnLabel}
-        </wui-button>
-      </wui-flex>
+//         <wui-button
+//           data-retry=${this.showRetry}
+//           variant="fill"
+//           .disabled=${!this.error}
+//           @click=${this.onSwitchNetwork.bind(this)}
+//         >
+//           <wui-icon color="inherit" slot="iconLeft" name="refresh"></wui-icon>
+//           Try again
+//         </wui-button>
+//       </wui-flex>
+//     `
+//     }
+//     onShowRetry() {
+//         var e;
+//         if (this.error && !this.showRetry) {
+//             this.showRetry = !0;
+//             const t = (e = this.shadowRoot) == null ? void 0 : e.querySelector("wui-button");
+//             t == null || t.animate([{
+//                 opacity: 0
+//             }, {
+//                 opacity: 1
+//             }], {
+//                 fill: "forwards",
+//                 easing: "ease"
+//             })
+//         }
+//     }
+//     async onSwitchNetwork() {
+//         try {
+//             this.error = !1,
+//                 this.network && (await Tn.switchActiveNetwork(this.network),
+//                     jn.state.isSiweEnabled || qN.navigateAfterNetworkSwitch())
+//         } catch {
+//             this.error = !0
+//         }
+//     }
+// }
+//     ;
+// qg.styles = iee;
+// d6([it()], qg.prototype, "showRetry", void 0);
+// d6([it()], qg.prototype, "error", void 0);
+// qg = d6([Pe("w3m-network-switch-view")], qg);
+// const see = fn`
+//   :host > wui-grid {
+//     max-height: 360px;
+//     overflow: auto;
+//   }
 
-      ${this.isWalletConnect ? Ee`
-            <wui-flex .padding=${["0", "xl", "xl", "xl"]} justifyContent="center">
-              <wui-link @click=${this.onCopyUri} color="fg-200">
-                <wui-icon size="xs" color="fg-200" slot="iconLeft" name="copy"></wui-icon>
-                Copy link
-              </wui-link>
-            </wui-flex>
-          ` : null}
+//   wui-grid::-webkit-scrollbar {
+//     display: none;
+//   }
+// `;
+// var YO = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let Zy = class extends Xt {
+//     constructor() {
+//         super(),
+//             this.unsubscribe = [],
+//             this.caipNetwork = Tn.state.caipNetwork,
+//             this.unsubscribe.push(Tn.subscribeKey("caipNetwork", e => this.caipNetwork = e))
+//     }
+//     disconnectedCallback() {
+//         this.unsubscribe.forEach(e => e())
+//     }
+//     render() {
+//         return Ee`
+//       <wui-grid padding="s" gridTemplateColumns="repeat(4, 1fr)" rowGap="l" columnGap="xs">
+//         ${this.networksTemplate()}
+//       </wui-grid>
 
-      <w3m-mobile-download-links .wallet=${this.wallet}></w3m-mobile-download-links>
-    `
-    }
-    onShowRetry() {
-        var e;
-        if (this.error && !this.showRetry) {
-            this.showRetry = !0;
-            const t = (e = this.shadowRoot) == null ? void 0 : e.querySelector("wui-button");
-            t == null || t.animate([{
-                opacity: 0
-            }, {
-                opacity: 1
-            }], {
-                fill: "forwards",
-                easing: "ease"
-            })
-        }
-    }
-    onTryAgain() {
-        var e, t;
-        this.buffering || (wr.setWcError(!1),
-            this.onRetry ? (this.isRetrying = !0,
-                (e = this.onRetry) == null || e.call(this)) : (t = this.onConnect) == null || t.call(this))
-    }
-    loaderTemplate() {
-        const e = Rs.state.themeVariables["--w3m-border-radius-master"]
-            , t = e ? parseInt(e.replace("px", ""), 10) : 4;
-        return Ee`<wui-loading-thumbnail radius=${t * 9}></wui-loading-thumbnail>`
-    }
-    onCopyUri() {
-        try {
-            this.uri && (vt.copyToClopboard(this.uri),
-                Rn.showSuccess("Link copied"))
-        } catch {
-            Rn.showError("Failed to copy")
-        }
-    }
-}
-// $s.styles = QX;
-lh([it()], $s.prototype, "uri", void 0);
-lh([it()], $s.prototype, "error", void 0);
-lh([it()], $s.prototype, "ready", void 0);
-lh([it()], $s.prototype, "showRetry", void 0);
-lh([it()], $s.prototype, "buffering", void 0);
-lh([En({
-    type: Boolean
-})], $s.prototype, "isMobile", void 0);
-lh([En()], $s.prototype, "onRetry", void 0);
-var XX = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-const eee = {
-    INJECTED: "browser",
-    ANNOUNCED: "browser"
-};
-let DC = class extends $s {
-    constructor() {
-        if (super(),
-            !this.connector)
-            throw new Error("w3m-connecting-view: No connector provided");
-        Ft.sendEvent({
-            type: "track",
-            event: "SELECT_WALLET",
-            properties: {
-                name: this.connector.name ?? "Unknown",
-                platform: eee[this.connector.type] ?? "external"
-            }
-        }),
-            this.onConnect = this.onConnectProxy.bind(this),
-            this.onAutoConnect = this.onConnectProxy.bind(this),
-            this.isWalletConnect = !1
-    }
-    async onConnectProxy() {
-        try {
-            this.error = !1,
-                this.connector && (this.connector.imageUrl && ls.setConnectedWalletImageUrl(this.connector.imageUrl),
-                    await wr.connectExternal(this.connector),
-                    jn.state.isSiweEnabled ? at.push("ConnectingSiwe") : en.close(),
-                    Ft.sendEvent({
-                        type: "track",
-                        event: "CONNECT_SUCCESS",
-                        properties: {
-                            method: "external"
-                        }
-                    }))
-        } catch (e) {
-            Ft.sendEvent({
-                type: "track",
-                event: "CONNECT_ERROR",
-                properties: {
-                    message: (e == null ? void 0 : e.message) ?? "Unknown"
-                }
-            }),
-                this.error = !0
-        }
-    }
-}
-    ;
-DC = XX([Pe("w3m-connecting-external-view")], DC);
-var JO = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let mE = class extends Xt {
-    constructor() {
-        var e;
-        super(...arguments),
-            this.dappName = (e = Ur.state.metadata) == null ? void 0 : e.name,
-            this.isSigning = !1
-    }
-    render() {
-        return Ee`
-      <wui-flex justifyContent="center" .padding=${["2xl", "0", "xxl", "0"]}>
-        <w3m-connecting-siwe></w3m-connecting-siwe>
-      </wui-flex>
-      <wui-flex
-        .padding=${["0", "4xl", "l", "4xl"]}
-        gap="s"
-        justifyContent="space-between"
-      >
-        <wui-text variant="paragraph-500" align="center" color="fg-100"
-          >${this.dappName ?? "Dapp"} needs to connect to your wallet</wui-text
-        >
-      </wui-flex>
-      <wui-flex
-        .padding=${["0", "3xl", "l", "3xl"]}
-        gap="s"
-        justifyContent="space-between"
-      >
-        <wui-text variant="small-400" align="center" color="fg-200"
-          >Sign this message to prove you own this wallet and proceed. Canceling will disconnect
-          you.</wui-text
-        >
-      </wui-flex>
-      <wui-flex .padding=${["l", "xl", "xl", "xl"]} gap="s" justifyContent="space-between">
-        <wui-button
-          size="md"
-          ?fullwidth=${!0}
-          variant="shade"
-          @click=${this.onCancel.bind(this)}
-          data-testid="w3m-connecting-siwe-cancel"
-        >
-          Cancel
-        </wui-button>
-        <wui-button
-          size="md"
-          ?fullwidth=${!0}
-          variant="fill"
-          @click=${this.onSign.bind(this)}
-          ?loading=${this.isSigning}
-          data-testid="w3m-connecting-siwe-sign"
-        >
-          ${this.isSigning ? "Signing..." : "Sign"}
-        </wui-button>
-      </wui-flex>
-    `
-    }
-    async onSign() {
-        this.isSigning = !0,
-            Ft.sendEvent({
-                event: "CLICK_SIGN_SIWE_MESSAGE",
-                type: "track"
-            });
-        try {
-            jn.setStatus("loading");
-            const e = await jn.signIn();
-            return jn.setStatus("success"),
-                Ft.sendEvent({
-                    event: "SIWE_AUTH_SUCCESS",
-                    type: "track"
-                }),
-                e
-        } catch {
-            return Rn.showError("Signature declined"),
-                jn.setStatus("error"),
-                Ft.sendEvent({
-                    event: "SIWE_AUTH_ERROR",
-                    type: "track"
-                })
-        } finally {
-            this.isSigning = !1
-        }
-    }
-    async onCancel() {
-        const { isConnected: e } = Pr.state;
-        e ? (await wr.disconnect(),
-            en.close()) : at.push("Connect"),
-            Ft.sendEvent({
-                event: "CLICK_CANCEL_SIWE",
-                type: "track"
-            })
-    }
-}
-    ;
-JO([it()], mE.prototype, "isSigning", void 0);
-mE = JO([Pe("w3m-connecting-siwe-view")], mE);
-var h6 = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let Ky = class extends Xt {
-    constructor() {
-        var e;
-        super(),
-            this.interval = void 0,
-            this.lastRetry = Date.now(),
-            this.wallet = (e = at.state.data) == null ? void 0 : e.wallet,
-            this.platform = void 0,
-            this.platforms = [],
-            this.initializeConnection(),
-            this.interval = setInterval(this.initializeConnection.bind(this), tl.TEN_SEC_MS)
-    }
-    disconnectedCallback() {
-        clearTimeout(this.interval)
-    }
-    render() {
-        return this.wallet ? (this.determinePlatforms(),
-            Ee`
-      ${this.headerTemplate()}
-      <div>${this.platformTemplate()}</div>
-    `) : Ee`<w3m-connecting-wc-qrcode></w3m-connecting-wc-qrcode>`
-    }
-    async initializeConnection(e = !1) {
-        try {
-            const { wcPairingExpiry: t } = wr.state;
-            if (e || vt.isPairingExpired(t)) {
-                if (wr.connectWalletConnect(),
-                    this.wallet) {
-                    const n = Cn.getWalletImage(this.wallet);
-                    n && ls.setConnectedWalletImageUrl(n)
-                } else {
-                    const i = Xr.state.connectors.find(o => o.type === "WALLET_CONNECT")
-                        , s = Cn.getConnectorImage(i);
-                    s && ls.setConnectedWalletImageUrl(s)
-                }
-                await wr.state.wcPromise,
-                    this.finalizeConnection(),
-                    jn.state.isSiweEnabled ? at.push("ConnectingSiwe") : en.close()
-            }
-        } catch (t) {
-            Ft.sendEvent({
-                type: "track",
-                event: "CONNECT_ERROR",
-                properties: {
-                    message: (t == null ? void 0 : t.message) ?? "Unknown"
-                }
-            }),
-                wr.setWcError(!0),
-                vt.isAllowedRetry(this.lastRetry) && (Rn.showError("Declined"),
-                    this.lastRetry = Date.now(),
-                    this.initializeConnection(!0))
-        }
-    }
-    finalizeConnection() {
-        const { wcLinking: e, recentWallet: t } = wr.state;
-        e && ls.setWalletConnectDeepLink(e),
-            t && ls.setWeb3ModalRecent(t),
-            Ft.sendEvent({
-                type: "track",
-                event: "CONNECT_SUCCESS",
-                properties: {
-                    method: e ? "mobile" : "qrcode"
-                }
-            })
-    }
-    determinePlatforms() {
-        if (!this.wallet)
-            throw new Error("w3m-connecting-wc-view:determinePlatforms No wallet");
-        if (this.platform)
-            return;
-        const { mobile_link: e, desktop_link: t, webapp_link: n, injected: i, rdns: s } = this.wallet
-            , o = i == null ? void 0 : i.map(({ injected_id: y }) => y).filter(Boolean)
-            , a = s ? [s] : o ?? []
-            , c = a.length
-            , u = e
-            , d = n
-            , f = wr.checkInstalled(a)
-            , p = c && f
-            , m = t && !vt.isMobile();
-        p && this.platforms.push("browser"),
-            u && this.platforms.push(vt.isMobile() ? "mobile" : "qrcode"),
-            d && this.platforms.push("web"),
-            m && this.platforms.push("desktop"),
-            !p && c && this.platforms.push("unsupported"),
-            this.platform = this.platforms[0]
-    }
-    platformTemplate() {
-        switch (this.platform) {
-            case "browser":
-                return Ee`<w3m-connecting-wc-browser></w3m-connecting-wc-browser>`;
-            case "desktop":
-                return Ee`
-          <w3m-connecting-wc-desktop .onRetry=${() => this.initializeConnection(!0)}>
-          </w3m-connecting-wc-desktop>
-        `;
-            case "web":
-                return Ee`
-          <w3m-connecting-wc-web .onRetry=${() => this.initializeConnection(!0)}>
-          </w3m-connecting-wc-web>
-        `;
-            case "mobile":
-                return Ee`
-          <w3m-connecting-wc-mobile isMobile .onRetry=${() => this.initializeConnection(!0)}>
-          </w3m-connecting-wc-mobile>
-        `;
-            case "qrcode":
-                return Ee`<w3m-connecting-wc-qrcode></w3m-connecting-wc-qrcode>`;
-            default:
-                return Ee`<w3m-connecting-wc-unsupported></w3m-connecting-wc-unsupported>`
-        }
-    }
-    headerTemplate() {
-        return this.platforms.length > 1 ? Ee`
-      <w3m-connecting-header
-        .platforms=${this.platforms}
-        .onSelectPlatfrom=${this.onSelectPlatform.bind(this)}
-      >
-      </w3m-connecting-header>
-    ` : null
-    }
-    async onSelectPlatform(e) {
-        var n;
-        const t = (n = this.shadowRoot) == null ? void 0 : n.querySelector("div");
-        t && (await t.animate([{
-            opacity: 1
-        }, {
-            opacity: 0
-        }], {
-            duration: 200,
-            fill: "forwards",
-            easing: "ease"
-        }).finished,
-            this.platform = e,
-            t.animate([{
-                opacity: 0
-            }, {
-                opacity: 1
-            }], {
-                duration: 200,
-                fill: "forwards",
-                easing: "ease"
-            }))
-    }
-}
-    ;
-h6([it()], Ky.prototype, "platform", void 0);
-h6([it()], Ky.prototype, "platforms", void 0);
-Ky = h6([Pe("w3m-connecting-wc-view")], Ky);
-var tee = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let LC = class extends Xt {
-    constructor() {
-        var e;
-        super(...arguments),
-            this.wallet = (e = at.state.data) == null ? void 0 : e.wallet
-    }
-    render() {
-        if (!this.wallet)
-            throw new Error("w3m-downloads-view");
-        return Ee`
-      <wui-flex gap="xs" flexDirection="column" .padding=${["s", "s", "l", "s"]}>
-        ${this.chromeTemplate()} ${this.iosTemplate()} ${this.androidTemplate()}
-        ${this.homepageTemplate()}
-      </wui-flex>
-    `
-    }
-    chromeTemplate() {
-        var e;
-        return (e = this.wallet) != null && e.chrome_store ? Ee`<wui-list-item
-      variant="icon"
-      icon="chromeStore"
-      iconVariant="square"
-      @click=${this.onChromeStore.bind(this)}
-      chevron
-    >
-      <wui-text variant="paragraph-500" color="fg-100">Chrome Extension</wui-text>
-    </wui-list-item>` : null
-    }
-    iosTemplate() {
-        var e;
-        return (e = this.wallet) != null && e.app_store ? Ee`<wui-list-item
-      variant="icon"
-      icon="appStore"
-      iconVariant="square"
-      @click=${this.onAppStore.bind(this)}
-      chevron
-    >
-      <wui-text variant="paragraph-500" color="fg-100">iOS App</wui-text>
-    </wui-list-item>` : null
-    }
-    androidTemplate() {
-        var e;
-        return (e = this.wallet) != null && e.play_store ? Ee`<wui-list-item
-      variant="icon"
-      icon="playStore"
-      iconVariant="square"
-      @click=${this.onPlayStore.bind(this)}
-      chevron
-    >
-      <wui-text variant="paragraph-500" color="fg-100">Android App</wui-text>
-    </wui-list-item>` : null
-    }
-    homepageTemplate() {
-        var e;
-        return (e = this.wallet) != null && e.homepage ? Ee`
-      <wui-list-item
-        variant="icon"
-        icon="browser"
-        iconVariant="square-blue"
-        @click=${this.onHomePage.bind(this)}
-        chevron
-      >
-        <wui-text variant="paragraph-500" color="fg-100">Website</wui-text>
-      </wui-list-item>
-    ` : null
-    }
-    onChromeStore() {
-        var e;
-        (e = this.wallet) != null && e.chrome_store && vt.openHref(this.wallet.chrome_store, "_blank")
-    }
-    onAppStore() {
-        var e;
-        (e = this.wallet) != null && e.app_store && vt.openHref(this.wallet.app_store, "_blank")
-    }
-    onPlayStore() {
-        var e;
-        (e = this.wallet) != null && e.play_store && vt.openHref(this.wallet.play_store, "_blank")
-    }
-    onHomePage() {
-        var e;
-        (e = this.wallet) != null && e.homepage && vt.openHref(this.wallet.homepage, "_blank")
-    }
-}
-    ;
-LC = tee([Pe("w3m-downloads-view")], LC);
-var ree = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-const nee = "https://walletconnect.com/explorer";
-let BC = class extends Xt {
-    render() {
-        return Ee`
-      <wui-flex flexDirection="column" padding="s" gap="xs">
-        ${this.recommendedWalletsTemplate()}
-        <wui-list-wallet
-          name="Explore all"
-          showAllWallets
-          walletIcon="allWallets"
-          icon="externalLink"
-          @click=${() => {
-                vt.openHref("https://walletconnect.com/explorer?type=wallet", "_blank")
-            }
-            }
-        ></wui-list-wallet>
-      </wui-flex>
-    `
-    }
-    recommendedWalletsTemplate() {
-        const { recommended: e, featured: t } = lr.state
-            , { customWallets: n } = Ur.state;
-        return [...t, ...n ?? [], ...e].slice(0, 4).map(s => Ee`
-        <wui-list-wallet
-          name=${s.name ?? "Unknown"}
-          tagVariant="main"
-          imageSrc=${kr(Cn.getWalletImage(s))}
-          @click=${() => {
-                vt.openHref(s.homepage ?? nee, "_blank")
-            }
-            }
-        ></wui-list-wallet>
-      `)
-    }
-}
-    ;
-BC = ree([Pe("w3m-get-wallet-view")], BC);
-const iee = fn`
-  @keyframes shake {
-    0% {
-      transform: translateX(0);
-    }
-    25% {
-      transform: translateX(3px);
-    }
-    50% {
-      transform: translateX(-3px);
-    }
-    75% {
-      transform: translateX(3px);
-    }
-    100% {
-      transform: translateX(0);
-    }
-  }
+//       <wui-separator></wui-separator>
 
-  wui-flex:first-child:not(:only-child) {
-    position: relative;
-  }
+//       <wui-flex padding="s" flexDirection="column" gap="m" alignItems="center">
+//         <wui-text variant="small-400" color="fg-300" align="center">
+//           Your connected wallet may not support some of the networks available for this dApp
+//         </wui-text>
+//         <wui-link @click=${this.onNetworkHelp.bind(this)}>
+//           <wui-icon size="xs" color="accent-100" slot="iconLeft" name="helpCircle"></wui-icon>
+//           What is a network
+//         </wui-link>
+//       </wui-flex>
+//     `
+//     }
+//     onNetworkHelp() {
+//         Ft.sendEvent({
+//             type: "track",
+//             event: "CLICK_NETWORK_HELP"
+//         }),
+//             at.push("WhatIsANetwork")
+//     }
+//     networksTemplate() {
+//         const { approvedCaipNetworkIds: e, requestedCaipNetworks: t, supportsAllNetworks: n } = Tn.state
+//             , i = e
+//             , s = t
+//             , o = {};
+//         return s && i && (i.forEach((a, c) => {
+//             o[a] = c
+//         }
+//         ),
+//             s.sort((a, c) => {
+//                 const u = o[a.id]
+//                     , d = o[c.id];
+//                 return u !== void 0 && d !== void 0 ? u - d : u !== void 0 ? -1 : d !== void 0 ? 1 : 0
+//             }
+//             )),
+//             s == null ? void 0 : s.map(a => {
+//                 var c;
+//                 return Ee`
+//         <wui-card-select
+//           .selected=${((c = this.caipNetwork) == null ? void 0 : c.id) === a.id}
+//           imageSrc=${kr(Cn.getNetworkImage(a))}
+//           type="network"
+//           name=${a.name ?? a.id}
+//           @click=${() => this.onSwitchNetwork(a)}
+//           .disabled=${!n && !(i != null && i.includes(a.id))}
+//           data-testid=${`w3m-network-switch-${a.name ?? a.id}`}
+//         ></wui-card-select>
+//       `
+//             }
+//             )
+//     }
+//     async onSwitchNetwork(e) {
+//         const { isConnected: t } = Pr.state
+//             , { approvedCaipNetworkIds: n, supportsAllNetworks: i, caipNetwork: s } = Tn.state
+//             , { data: o } = at.state;
+//         t && (s == null ? void 0 : s.id) !== e.id ? n != null && n.includes(e.id) ? (await Tn.switchActiveNetwork(e),
+//             qN.navigateAfterNetworkSwitch()) : i && at.push("SwitchNetwork", {
+//                 ...o,
+//                 network: e
+//             }) : t || (Tn.setCaipNetwork(e),
+//                 at.push("Connect"))
+//     }
+// }
+//     ;
+// Zy.styles = see;
+// YO([it()], Zy.prototype, "caipNetwork", void 0);
+// Zy = YO([Pe("w3m-networks-view")], Zy);
+// const oee = fn`
+//   :host > wui-flex:first-child {
+//     height: 500px;
+//     overflow-y: auto;
+//     overflow-x: hidden;
+//     scrollbar-width: none;
+//   }
+// `;
+// var uh = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// const Cv = "last-transaction"
+//     , aee = 7;
+// let ul = class extends Xt {
+//     constructor() {
+//         super(),
+//             this.unsubscribe = [],
+//             this.paginationObserver = void 0,
+//             this.address = Pr.state.address,
+//             this.transactions = ra.state.transactions,
+//             this.transactionsByYear = ra.state.transactionsByYear,
+//             this.loading = ra.state.loading,
+//             this.empty = ra.state.empty,
+//             this.next = ra.state.next,
+//             this.unsubscribe.push(Pr.subscribe(e => {
+//                 e.isConnected && this.address !== e.address && (this.address = e.address,
+//                     ra.resetTransactions(),
+//                     ra.fetchTransactions(e.address))
+//             }
+//             ), ra.subscribe(e => {
+//                 this.transactions = e.transactions,
+//                     this.transactionsByYear = e.transactionsByYear,
+//                     this.loading = e.loading,
+//                     this.empty = e.empty,
+//                     this.next = e.next
+//             }
+//             ))
+//     }
+//     firstUpdated() {
+//         this.transactions.length === 0 && ra.fetchTransactions(this.address),
+//             this.createPaginationObserver()
+//     }
+//     updated() {
+//         this.setPaginationObserver()
+//     }
+//     disconnectedCallback() {
+//         this.unsubscribe.forEach(e => e())
+//     }
+//     render() {
+//         return Ee`
+//       <wui-flex flexDirection="column" padding="s" gap="s">
+//         ${this.empty ? null : this.templateTransactionsByYear()}
+//         ${this.loading ? this.templateLoading() : null}
+//         ${!this.loading && this.empty ? this.templateEmpty() : null}
+//       </wui-flex>
+//     `
+//     }
+//     templateTransactionsByYear() {
+//         const e = Object.keys(this.transactionsByYear).sort().reverse();
+//         return e.map((t, n) => {
+//             const i = n === e.length - 1
+//                 , s = parseInt(t, 10)
+//                 , o = mf.getTransactionGroupTitle(s)
+//                 , a = this.transactionsByYear[s];
+//             return a ? Ee`
+//         <wui-flex flexDirection="column" gap="s">
+//           <wui-flex
+//             alignItems="center"
+//             flexDirection="row"
+//             .padding=${["xs", "s", "s", "s"]}
+//           >
+//             <wui-text variant="paragraph-500" color="fg-200">${o}</wui-text>
+//           </wui-flex>
+//           <wui-flex flexDirection="column" gap="xs">
+//             ${this.templateTransactions(a, i)}
+//           </wui-flex>
+//         </wui-flex>
+//       ` : null
+//         }
+//         )
+//     }
+//     templateRenderTransaction(e, t) {
+//         const { date: n, descriptions: i, direction: s, isAllNFT: o, images: a, status: c, transfers: u, type: d } = this.getTransactionListItemProps(e)
+//             , f = (u == null ? void 0 : u.length) > 1;
+//         return (u == null ? void 0 : u.length) === 2 && !o ? Ee`
+//         <wui-transaction-list-item
+//           date=${n}
+//           .direction=${s}
+//           id=${t && this.next ? Cv : ""}
+//           status=${c}
+//           type=${d}
+//           .images=${a}
+//           .descriptions=${i}
+//         ></wui-transaction-list-item>
+//       ` : f ? u.map((m, y) => {
+//             const x = mf.getTransferDescription(m)
+//                 , R = t && y === u.length - 1;
+//             return Ee` <wui-transaction-list-item
+//           date=${n}
+//           direction=${m.direction}
+//           id=${R && this.next ? Cv : ""}
+//           status=${c}
+//           type=${d}
+//           .onlyDirectionIcon=${!0}
+//           .images=${[a == null ? void 0 : a[y]]}
+//           .descriptions=${[x]}
+//         ></wui-transaction-list-item>`
+//         }
+//         ) : Ee`
+//       <wui-transaction-list-item
+//         date=${n}
+//         .direction=${s}
+//         id=${t && this.next ? Cv : ""}
+//         status=${c}
+//         type=${d}
+//         .images=${a}
+//         .descriptions=${i}
+//       ></wui-transaction-list-item>
+//     `
+//     }
+//     templateTransactions(e, t) {
+//         return e.map((n, i) => {
+//             const s = t && i === e.length - 1;
+//             return Ee`${this.templateRenderTransaction(n, s)}`
+//         }
+//         )
+//     }
+//     templateEmpty() {
+//         return Ee`
+//       <wui-flex
+//         flexGrow="1"
+//         flexDirection="column"
+//         justifyContent="center"
+//         alignItems="center"
+//         .padding=${["3xl", "xl", "3xl", "xl"]}
+//         gap="xl"
+//       >
+//         <wui-icon-box
+//           backgroundColor="glass-005"
+//           background="gray"
+//           iconColor="fg-200"
+//           icon="wallet"
+//           size="lg"
+//           ?border=${!0}
+//           borderColor="wui-color-bg-125"
+//         ></wui-icon-box>
+//         <wui-flex flexDirection="column" alignItems="center" gap="xs">
+//           <wui-text align="center" variant="paragraph-500" color="fg-100"
+//             >No Transactions yet</wui-text
+//           >
+//           <wui-text align="center" variant="small-500" color="fg-200"
+//             >Start trading on dApps <br />
+//             to grow your wallet!</wui-text
+//           >
+//         </wui-flex>
+//       </wui-flex>
+//     `
+//     }
+//     templateLoading() {
+//         return Array(aee).fill(Ee` <wui-transaction-list-item-loader></wui-transaction-list-item-loader> `).map(e => e)
+//     }
+//     createPaginationObserver() {
+//         const { projectId: e } = Ur.state;
+//         this.paginationObserver = new IntersectionObserver(([t]) => {
+//             t != null && t.isIntersecting && !this.loading && (ra.fetchTransactions(this.address),
+//                 Ft.sendEvent({
+//                     type: "track",
+//                     event: "LOAD_MORE_TRANSACTIONS",
+//                     properties: {
+//                         address: this.address,
+//                         projectId: e,
+//                         cursor: this.next
+//                     }
+//                 }))
+//         }
+//             , {}),
+//             this.setPaginationObserver()
+//     }
+//     setPaginationObserver() {
+//         var t, n, i;
+//         (t = this.paginationObserver) == null || t.disconnect();
+//         const e = (n = this.shadowRoot) == null ? void 0 : n.querySelector(`#${Cv}`);
+//         e && ((i = this.paginationObserver) == null || i.observe(e))
+//     }
+//     getTransactionListItemProps(e) {
+//         var c, u, d, f, p;
+//         const t = BO.getRelativeDateFromNow((c = e == null ? void 0 : e.metadata) == null ? void 0 : c.minedAt)
+//             , n = mf.getTransactionDescriptions(e)
+//             , i = e == null ? void 0 : e.transfers
+//             , s = (u = e == null ? void 0 : e.transfers) == null ? void 0 : u[0]
+//             , o = !!s && ((d = e == null ? void 0 : e.transfers) == null ? void 0 : d.every(m => !!m.nft_info))
+//             , a = mf.getTransactionImages(i);
+//         return {
+//             date: t,
+//             direction: s == null ? void 0 : s.direction,
+//             descriptions: n,
+//             isAllNFT: o,
+//             images: a,
+//             status: (f = e.metadata) == null ? void 0 : f.status,
+//             transfers: i,
+//             type: (p = e.metadata) == null ? void 0 : p.operationType
+//         }
+//     }
+// }
+//     ;
+// ul.styles = oee;
+// uh([it()], ul.prototype, "address", void 0);
+// uh([it()], ul.prototype, "transactions", void 0);
+// uh([it()], ul.prototype, "transactionsByYear", void 0);
+// uh([it()], ul.prototype, "loading", void 0);
+// uh([it()], ul.prototype, "empty", void 0);
+// uh([it()], ul.prototype, "next", void 0);
+// ul = uh([Pe("w3m-transactions-view")], ul);
+// var cee = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// const lee = [{
+//     images: ["network", "layers", "system"],
+//     title: "The system’s nuts and bolts",
+//     text: "A network is what brings the blockchain to life, as this technical infrastructure allows apps to access the ledger and smart contract services."
+// }, {
+//     images: ["noun", "defiAlt", "dao"],
+//     title: "Designed for different uses",
+//     text: "Each network is designed differently, and may therefore suit certain apps and experiences."
+// }];
+// let jC = class extends Xt {
+//     render() {
+//         return Ee`
+//       <wui-flex
+//         flexDirection="column"
+//         .padding=${["xxl", "xl", "xl", "xl"]}
+//         alignItems="center"
+//         gap="xl"
+//       >
+//         <w3m-help-widget .data=${lee}></w3m-help-widget>
+//         <wui-button
+//           variant="fill"
+//           size="sm"
+//           @click=${() => {
+//                 vt.openHref("https://ethereum.org/en/developers/docs/networks/", "_blank")
+//             }
+//             }
+//         >
+//           Learn more
+//           <wui-icon color="inherit" slot="iconRight" name="externalLink"></wui-icon>
+//         </wui-button>
+//       </wui-flex>
+//     `
+//     }
+// }
+//     ;
+// jC = cee([Pe("w3m-what-is-a-network-view")], jC);
+// var uee = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// const fee = [{
+//     images: ["login", "profile", "lock"],
+//     title: "One login for all of web3",
+//     text: "Log in to any app by connecting your wallet. Say goodbye to countless passwords!"
+// }, {
+//     images: ["defi", "nft", "eth"],
+//     title: "A home for your digital assets",
+//     text: "A wallet lets you store, send and receive digital assets like cryptocurrencies and NFTs."
+// }, {
+//     images: ["browser", "noun", "dao"],
+//     title: "Your gateway to a new web",
+//     text: "With your wallet, you can explore and interact with DeFi, NFTs, DAOs, and much more."
+// }];
+// let UC = class extends Xt {
+//     render() {
+//         return Ee`
+//       <wui-flex
+//         flexDirection="column"
+//         .padding=${["xxl", "xl", "xl", "xl"]}
+//         alignItems="center"
+//         gap="xl"
+//       >
+//         <w3m-help-widget .data=${fee}></w3m-help-widget>
+//         <wui-button variant="fill" size="sm" @click=${this.onGetWallet.bind(this)}>
+//           <wui-icon color="inherit" slot="iconLeft" name="wallet"></wui-icon>
+//           Get a wallet
+//         </wui-button>
+//       </wui-flex>
+//     `
+//     }
+//     onGetWallet() {
+//         Ft.sendEvent({
+//             type: "track",
+//             event: "CLICK_GET_WALLET"
+//         }),
+//             at.push("GetWallet")
+//     }
+// }
+//     ;
+// UC = uee([Pe("w3m-what-is-a-wallet-view")], UC);
+// const hee = fn`
+//   wui-loading-spinner {
+//     margin: 9px auto;
+//   }
+// `
+//     , Ed = {
+//         SECURE_SITE_SDK: "https://secure.web3modal.com/sdk",
+//         APP_EVENT_KEY: "@w3m-app/",
+//         FRAME_EVENT_KEY: "@w3m-frame/",
+//         RPC_METHOD_KEY: "RPC_",
+//         STORAGE_KEY: "@w3m-storage/",
+//         SESSION_TOKEN_KEY: "SESSION_TOKEN_KEY",
+//         EMAIL_LOGIN_USED_KEY: "EMAIL_LOGIN_USED_KEY",
+//         LAST_USED_CHAIN_KEY: "LAST_USED_CHAIN_KEY",
+//         LAST_EMAIL_LOGIN_TIME: "LAST_EMAIL_LOGIN_TIME",
+//         EMAIL: "EMAIL",
+//         APP_SWITCH_NETWORK: "@w3m-app/SWITCH_NETWORK",
+//         APP_CONNECT_EMAIL: "@w3m-app/CONNECT_EMAIL",
+//         APP_CONNECT_DEVICE: "@w3m-app/CONNECT_DEVICE",
+//         APP_CONNECT_OTP: "@w3m-app/CONNECT_OTP",
+//         APP_GET_USER: "@w3m-app/GET_USER",
+//         APP_SIGN_OUT: "@w3m-app/SIGN_OUT",
+//         APP_IS_CONNECTED: "@w3m-app/IS_CONNECTED",
+//         APP_GET_CHAIN_ID: "@w3m-app/GET_CHAIN_ID",
+//         APP_RPC_REQUEST: "@w3m-app/RPC_REQUEST",
+//         APP_UPDATE_EMAIL: "@w3m-app/UPDATE_EMAIL",
+//         APP_AWAIT_UPDATE_EMAIL: "@w3m-app/AWAIT_UPDATE_EMAIL",
+//         APP_SYNC_THEME: "@w3m-app/SYNC_THEME",
+//         APP_SYNC_DAPP_DATA: "@w3m-app/SYNC_DAPP_DATA",
+//         FRAME_SWITCH_NETWORK_ERROR: "@w3m-frame/SWITCH_NETWORK_ERROR",
+//         FRAME_SWITCH_NETWORK_SUCCESS: "@w3m-frame/SWITCH_NETWORK_SUCCESS",
+//         FRAME_CONNECT_EMAIL_ERROR: "@w3m-frame/CONNECT_EMAIL_ERROR",
+//         FRAME_CONNECT_EMAIL_SUCCESS: "@w3m-frame/CONNECT_EMAIL_SUCCESS",
+//         FRAME_CONNECT_DEVICE_ERROR: "@w3m-frame/CONNECT_DEVICE_ERROR",
+//         FRAME_CONNECT_DEVICE_SUCCESS: "@w3m-frame/CONNECT_DEVICE_SUCCESS",
+//         FRAME_CONNECT_OTP_SUCCESS: "@w3m-frame/CONNECT_OTP_SUCCESS",
+//         FRAME_CONNECT_OTP_ERROR: "@w3m-frame/CONNECT_OTP_ERROR",
+//         FRAME_GET_USER_SUCCESS: "@w3m-frame/GET_USER_SUCCESS",
+//         FRAME_GET_USER_ERROR: "@w3m-frame/GET_USER_ERROR",
+//         FRAME_SIGN_OUT_SUCCESS: "@w3m-frame/SIGN_OUT_SUCCESS",
+//         FRAME_SIGN_OUT_ERROR: "@w3m-frame/SIGN_OUT_ERROR",
+//         FRAME_IS_CONNECTED_SUCCESS: "@w3m-frame/IS_CONNECTED_SUCCESS",
+//         FRAME_IS_CONNECTED_ERROR: "@w3m-frame/IS_CONNECTED_ERROR",
+//         FRAME_GET_CHAIN_ID_SUCCESS: "@w3m-frame/GET_CHAIN_ID_SUCCESS",
+//         FRAME_GET_CHAIN_ID_ERROR: "@w3m-frame/GET_CHAIN_ID_ERROR",
+//         FRAME_RPC_REQUEST_SUCCESS: "@w3m-frame/RPC_REQUEST_SUCCESS",
+//         FRAME_RPC_REQUEST_ERROR: "@w3m-frame/RPC_REQUEST_ERROR",
+//         FRAME_SESSION_UPDATE: "@w3m-frame/SESSION_UPDATE",
+//         FRAME_UPDATE_EMAIL_SUCCESS: "@w3m-frame/UPDATE_EMAIL_SUCCESS",
+//         FRAME_UPDATE_EMAIL_ERROR: "@w3m-frame/UPDATE_EMAIL_ERROR",
+//         FRAME_AWAIT_UPDATE_EMAIL_SUCCESS: "@w3m-frame/AWAIT_UPDATE_EMAIL_SUCCESS",
+//         FRAME_AWAIT_UPDATE_EMAIL_ERROR: "@w3m-frame/AWAIT_UPDATE_EMAIL_ERROR",
+//         FRAME_SYNC_THEME_SUCCESS: "@w3m-frame/SYNC_THEME_SUCCESS",
+//         FRAME_SYNC_THEME_ERROR: "@w3m-frame/SYNC_THEME_ERROR",
+//         FRAME_SYNC_DAPP_DATA_SUCCESS: "@w3m-frame/SYNC_DAPP_DATA_SUCCESS",
+//         FRAME_SYNC_DAPP_DATA_ERROR: "@w3m-frame/SYNC_DAPP_DATA_ERROR"
+//     };
+// var Dr;
+// (function (r) {
+//     r.assertEqual = i => i;
+//     function e(i) { }
+//     r.assertIs = e;
+//     function t(i) {
+//         throw new Error
+//     }
+//     r.assertNever = t,
+//         r.arrayToEnum = i => {
+//             const s = {};
+//             for (const o of i)
+//                 s[o] = o;
+//             return s
+//         }
+//         ,
+//         r.getValidEnumValues = i => {
+//             const s = r.objectKeys(i).filter(a => typeof i[i[a]] != "number")
+//                 , o = {};
+//             for (const a of s)
+//                 o[a] = i[a];
+//             return r.objectValues(o)
+//         }
+//         ,
+//         r.objectValues = i => r.objectKeys(i).map(function (s) {
+//             return i[s]
+//         }),
+//         r.objectKeys = typeof Object.keys == "function" ? i => Object.keys(i) : i => {
+//             const s = [];
+//             for (const o in i)
+//                 Object.prototype.hasOwnProperty.call(i, o) && s.push(o);
+//             return s
+//         }
+//         ,
+//         r.find = (i, s) => {
+//             for (const o of i)
+//                 if (s(o))
+//                     return o
+//         }
+//         ,
+//         r.isInteger = typeof Number.isInteger == "function" ? i => Number.isInteger(i) : i => typeof i == "number" && isFinite(i) && Math.floor(i) === i;
+//     function n(i, s = " | ") {
+//         return i.map(o => typeof o == "string" ? `'${o}'` : o).join(s)
+//     }
+//     r.joinValues = n,
+//         r.jsonStringifyReplacer = (i, s) => typeof s == "bigint" ? s.toString() : s
+// }
+// )(Dr || (Dr = {}));
+// var vE;
+// (function (r) {
+//     r.mergeShapes = (e, t) => ({
+//         ...e,
+//         ...t
+//     })
+// }
+// )(vE || (vE = {}));
+// const Je = Dr.arrayToEnum(["string", "nan", "number", "integer", "float", "boolean", "date", "bigint", "symbol", "function", "undefined", "null", "array", "object", "unknown", "promise", "void", "never", "map", "set"])
+//     , Gl = r => {
+//         switch (typeof r) {
+//             case "undefined":
+//                 return Je.undefined;
+//             case "string":
+//                 return Je.string;
+//             case "number":
+//                 return isNaN(r) ? Je.nan : Je.number;
+//             case "boolean":
+//                 return Je.boolean;
+//             case "function":
+//                 return Je.function;
+//             case "bigint":
+//                 return Je.bigint;
+//             case "symbol":
+//                 return Je.symbol;
+//             case "object":
+//                 return Array.isArray(r) ? Je.array : r === null ? Je.null : r.then && typeof r.then == "function" && r.catch && typeof r.catch == "function" ? Je.promise : typeof Map < "u" && r instanceof Map ? Je.map : typeof Set < "u" && r instanceof Set ? Je.set : typeof Date < "u" && r instanceof Date ? Je.date : Je.object;
+//             default:
+//                 return Je.unknown
+//         }
+//     }
+//     , $e = Dr.arrayToEnum(["invalid_type", "invalid_literal", "custom", "invalid_union", "invalid_union_discriminator", "invalid_enum_value", "unrecognized_keys", "invalid_arguments", "invalid_return_type", "invalid_date", "invalid_string", "too_small", "too_big", "invalid_intersection_types", "not_multiple_of", "not_finite"])
+//     , dee = r => JSON.stringify(r, null, 2).replace(/"([^"]+)":/g, "$1:");
+// class da extends Error {
+//     constructor(e) {
+//         super(),
+//             this.issues = [],
+//             this.addIssue = n => {
+//                 this.issues = [...this.issues, n]
+//             }
+//             ,
+//             this.addIssues = (n = []) => {
+//                 this.issues = [...this.issues, ...n]
+//             }
+//             ;
+//         const t = new.target.prototype;
+//         Object.setPrototypeOf ? Object.setPrototypeOf(this, t) : this.__proto__ = t,
+//             this.name = "ZodError",
+//             this.issues = e
+//     }
+//     get errors() {
+//         return this.issues
+//     }
+//     format(e) {
+//         const t = e || function (s) {
+//             return s.message
+//         }
+//             , n = {
+//                 _errors: []
+//             }
+//             , i = s => {
+//                 for (const o of s.issues)
+//                     if (o.code === "invalid_union")
+//                         o.unionErrors.map(i);
+//                     else if (o.code === "invalid_return_type")
+//                         i(o.returnTypeError);
+//                     else if (o.code === "invalid_arguments")
+//                         i(o.argumentsError);
+//                     else if (o.path.length === 0)
+//                         n._errors.push(t(o));
+//                     else {
+//                         let a = n
+//                             , c = 0;
+//                         for (; c < o.path.length;) {
+//                             const u = o.path[c];
+//                             c === o.path.length - 1 ? (a[u] = a[u] || {
+//                                 _errors: []
+//                             },
+//                                 a[u]._errors.push(t(o))) : a[u] = a[u] || {
+//                                     _errors: []
+//                                 },
+//                                 a = a[u],
+//                                 c++
+//                         }
+//                     }
+//             }
+//             ;
+//         return i(this),
+//             n
+//     }
+//     toString() {
+//         return this.message
+//     }
+//     get message() {
+//         return JSON.stringify(this.issues, Dr.jsonStringifyReplacer, 2)
+//     }
+//     get isEmpty() {
+//         return this.issues.length === 0
+//     }
+//     flatten(e = t => t.message) {
+//         const t = {}
+//             , n = [];
+//         for (const i of this.issues)
+//             i.path.length > 0 ? (t[i.path[0]] = t[i.path[0]] || [],
+//                 t[i.path[0]].push(e(i))) : n.push(e(i));
+//         return {
+//             formErrors: n,
+//             fieldErrors: t
+//         }
+//     }
+//     get formErrors() {
+//         return this.flatten()
+//     }
+// }
+// da.create = r => new da(r);
+// const Gg = (r, e) => {
+//     let t;
+//     switch (r.code) {
+//         case $e.invalid_type:
+//             r.received === Je.undefined ? t = "Required" : t = `Expected ${r.expected}, received ${r.received}`;
+//             break;
+//         case $e.invalid_literal:
+//             t = `Invalid literal value, expected ${JSON.stringify(r.expected, Dr.jsonStringifyReplacer)}`;
+//             break;
+//         case $e.unrecognized_keys:
+//             t = `Unrecognized key(s) in object: ${Dr.joinValues(r.keys, ", ")}`;
+//             break;
+//         case $e.invalid_union:
+//             t = "Invalid input";
+//             break;
+//         case $e.invalid_union_discriminator:
+//             t = `Invalid discriminator value. Expected ${Dr.joinValues(r.options)}`;
+//             break;
+//         case $e.invalid_enum_value:
+//             t = `Invalid enum value. Expected ${Dr.joinValues(r.options)}, received '${r.received}'`;
+//             break;
+//         case $e.invalid_arguments:
+//             t = "Invalid function arguments";
+//             break;
+//         case $e.invalid_return_type:
+//             t = "Invalid function return type";
+//             break;
+//         case $e.invalid_date:
+//             t = "Invalid date";
+//             break;
+//         case $e.invalid_string:
+//             typeof r.validation == "object" ? "includes" in r.validation ? (t = `Invalid input: must include "${r.validation.includes}"`,
+//                 typeof r.validation.position == "number" && (t = `${t} at one or more positions greater than or equal to ${r.validation.position}`)) : "startsWith" in r.validation ? t = `Invalid input: must start with "${r.validation.startsWith}"` : "endsWith" in r.validation ? t = `Invalid input: must end with "${r.validation.endsWith}"` : Dr.assertNever(r.validation) : r.validation !== "regex" ? t = `Invalid ${r.validation}` : t = "Invalid";
+//             break;
+//         case $e.too_small:
+//             r.type === "array" ? t = `Array must contain ${r.exact ? "exactly" : r.inclusive ? "at least" : "more than"} ${r.minimum} element(s)` : r.type === "string" ? t = `String must contain ${r.exact ? "exactly" : r.inclusive ? "at least" : "over"} ${r.minimum} character(s)` : r.type === "number" ? t = `Number must be ${r.exact ? "exactly equal to " : r.inclusive ? "greater than or equal to " : "greater than "}${r.minimum}` : r.type === "date" ? t = `Date must be ${r.exact ? "exactly equal to " : r.inclusive ? "greater than or equal to " : "greater than "}${new Date(Number(r.minimum))}` : t = "Invalid input";
+//             break;
+//         case $e.too_big:
+//             r.type === "array" ? t = `Array must contain ${r.exact ? "exactly" : r.inclusive ? "at most" : "less than"} ${r.maximum} element(s)` : r.type === "string" ? t = `String must contain ${r.exact ? "exactly" : r.inclusive ? "at most" : "under"} ${r.maximum} character(s)` : r.type === "number" ? t = `Number must be ${r.exact ? "exactly" : r.inclusive ? "less than or equal to" : "less than"} ${r.maximum}` : r.type === "bigint" ? t = `BigInt must be ${r.exact ? "exactly" : r.inclusive ? "less than or equal to" : "less than"} ${r.maximum}` : r.type === "date" ? t = `Date must be ${r.exact ? "exactly" : r.inclusive ? "smaller than or equal to" : "smaller than"} ${new Date(Number(r.maximum))}` : t = "Invalid input";
+//             break;
+//         case $e.custom:
+//             t = "Invalid input";
+//             break;
+//         case $e.invalid_intersection_types:
+//             t = "Intersection results could not be merged";
+//             break;
+//         case $e.not_multiple_of:
+//             t = `Number must be a multiple of ${r.multipleOf}`;
+//             break;
+//         case $e.not_finite:
+//             t = "Number must be finite";
+//             break;
+//         default:
+//             t = e.defaultError,
+//                 Dr.assertNever(r)
+//     }
+//     return {
+//         message: t
+//     }
+// }
+//     ;
+// let QO = Gg;
+// function pee(r) {
+//     QO = r
+// }
+// function Jy() {
+//     return QO
+// }
+// const Yy = r => {
+//     const { data: e, path: t, errorMaps: n, issueData: i } = r
+//         , s = [...t, ...i.path || []]
+//         , o = {
+//             ...i,
+//             path: s
+//         };
+//     let a = "";
+//     const c = n.filter(u => !!u).slice().reverse();
+//     for (const u of c)
+//         a = u(o, {
+//             data: e,
+//             defaultError: a
+//         }).message;
+//     return {
+//         ...i,
+//         path: s,
+//         message: i.message || a
+//     }
+// }
+//     , gee = [];
+// function tt(r, e) {
+//     const t = Yy({
+//         issueData: e,
+//         data: r.data,
+//         path: r.path,
+//         errorMaps: [r.common.contextualErrorMap, r.schemaErrorMap, Jy(), Gg].filter(n => !!n)
+//     });
+//     r.common.issues.push(t)
+// }
+// class Ki {
+//     constructor() {
+//         this.value = "valid"
+//     }
+//     dirty() {
+//         this.value === "valid" && (this.value = "dirty")
+//     }
+//     abort() {
+//         this.value !== "aborted" && (this.value = "aborted")
+//     }
+//     static mergeArray(e, t) {
+//         const n = [];
+//         for (const i of t) {
+//             if (i.status === "aborted")
+//                 return Wt;
+//             i.status === "dirty" && e.dirty(),
+//                 n.push(i.value)
+//         }
+//         return {
+//             status: e.value,
+//             value: n
+//         }
+//     }
+//     static async mergeObjectAsync(e, t) {
+//         const n = [];
+//         for (const i of t)
+//             n.push({
+//                 key: await i.key,
+//                 value: await i.value
+//             });
+//         return Ki.mergeObjectSync(e, n)
+//     }
+//     static mergeObjectSync(e, t) {
+//         const n = {};
+//         for (const i of t) {
+//             const { key: s, value: o } = i;
+//             if (s.status === "aborted" || o.status === "aborted")
+//                 return Wt;
+//             s.status === "dirty" && e.dirty(),
+//                 o.status === "dirty" && e.dirty(),
+//                 s.value !== "__proto__" && (typeof o.value < "u" || i.alwaysSet) && (n[s.value] = o.value)
+//         }
+//         return {
+//             status: e.value,
+//             value: n
+//         }
+//     }
+// }
+// const Wt = Object.freeze({
+//     status: "aborted"
+// })
+//     , XO = r => ({
+//         status: "dirty",
+//         value: r
+//     })
+//     , hs = r => ({
+//         status: "valid",
+//         value: r
+//     })
+//     , yE = r => r.status === "aborted"
+//     , wE = r => r.status === "dirty"
+//     , Kg = r => r.status === "valid"
+//     , Qy = r => typeof Promise < "u" && r instanceof Promise;
+// var bt;
+// (function (r) {
+//     r.errToObj = e => typeof e == "string" ? {
+//         message: e
+//     } : e || {},
+//         r.toString = e => typeof e == "string" ? e : e == null ? void 0 : e.message
+// }
+// )(bt || (bt = {}));
+// class mc {
+//     constructor(e, t, n, i) {
+//         this._cachedPath = [],
+//             this.parent = e,
+//             this.data = t,
+//             this._path = n,
+//             this._key = i
+//     }
+//     get path() {
+//         return this._cachedPath.length || (this._key instanceof Array ? this._cachedPath.push(...this._path, ...this._key) : this._cachedPath.push(...this._path, this._key)),
+//             this._cachedPath
+//     }
+// }
+// const FC = (r, e) => {
+//     if (Kg(e))
+//         return {
+//             success: !0,
+//             data: e.value
+//         };
+//     if (!r.common.issues.length)
+//         throw new Error("Validation failed but no issues detected.");
+//     return {
+//         success: !1,
+//         get error() {
+//             if (this._error)
+//                 return this._error;
+//             const t = new da(r.common.issues);
+//             return this._error = t,
+//                 this._error
+//         }
+//     }
+// }
+//     ;
+// function Kt(r) {
+//     if (!r)
+//         return {};
+//     const { errorMap: e, invalid_type_error: t, required_error: n, description: i } = r;
+//     if (e && (t || n))
+//         throw new Error(`Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`);
+//     return e ? {
+//         errorMap: e,
+//         description: i
+//     } : {
+//         errorMap: (o, a) => o.code !== "invalid_type" ? {
+//             message: a.defaultError
+//         } : typeof a.data > "u" ? {
+//             message: n ?? a.defaultError
+//         } : {
+//             message: t ?? a.defaultError
+//         },
+//         description: i
+//     }
+// }
+// class er {
+//     constructor(e) {
+//         this.spa = this.safeParseAsync,
+//             this._def = e,
+//             this.parse = this.parse.bind(this),
+//             this.safeParse = this.safeParse.bind(this),
+//             this.parseAsync = this.parseAsync.bind(this),
+//             this.safeParseAsync = this.safeParseAsync.bind(this),
+//             this.spa = this.spa.bind(this),
+//             this.refine = this.refine.bind(this),
+//             this.refinement = this.refinement.bind(this),
+//             this.superRefine = this.superRefine.bind(this),
+//             this.optional = this.optional.bind(this),
+//             this.nullable = this.nullable.bind(this),
+//             this.nullish = this.nullish.bind(this),
+//             this.array = this.array.bind(this),
+//             this.promise = this.promise.bind(this),
+//             this.or = this.or.bind(this),
+//             this.and = this.and.bind(this),
+//             this.transform = this.transform.bind(this),
+//             this.brand = this.brand.bind(this),
+//             this.default = this.default.bind(this),
+//             this.catch = this.catch.bind(this),
+//             this.describe = this.describe.bind(this),
+//             this.pipe = this.pipe.bind(this),
+//             this.readonly = this.readonly.bind(this),
+//             this.isNullable = this.isNullable.bind(this),
+//             this.isOptional = this.isOptional.bind(this)
+//     }
+//     get description() {
+//         return this._def.description
+//     }
+//     _getType(e) {
+//         return Gl(e.data)
+//     }
+//     _getOrReturnCtx(e, t) {
+//         return t || {
+//             common: e.parent.common,
+//             data: e.data,
+//             parsedType: Gl(e.data),
+//             schemaErrorMap: this._def.errorMap,
+//             path: e.path,
+//             parent: e.parent
+//         }
+//     }
+//     _processInputParams(e) {
+//         return {
+//             status: new Ki,
+//             ctx: {
+//                 common: e.parent.common,
+//                 data: e.data,
+//                 parsedType: Gl(e.data),
+//                 schemaErrorMap: this._def.errorMap,
+//                 path: e.path,
+//                 parent: e.parent
+//             }
+//         }
+//     }
+//     _parseSync(e) {
+//         const t = this._parse(e);
+//         if (Qy(t))
+//             throw new Error("Synchronous parse encountered promise.");
+//         return t
+//     }
+//     _parseAsync(e) {
+//         const t = this._parse(e);
+//         return Promise.resolve(t)
+//     }
+//     parse(e, t) {
+//         const n = this.safeParse(e, t);
+//         if (n.success)
+//             return n.data;
+//         throw n.error
+//     }
+//     safeParse(e, t) {
+//         var n;
+//         const i = {
+//             common: {
+//                 issues: [],
+//                 async: (n = t == null ? void 0 : t.async) !== null && n !== void 0 ? n : !1,
+//                 contextualErrorMap: t == null ? void 0 : t.errorMap
+//             },
+//             path: (t == null ? void 0 : t.path) || [],
+//             schemaErrorMap: this._def.errorMap,
+//             parent: null,
+//             data: e,
+//             parsedType: Gl(e)
+//         }
+//             , s = this._parseSync({
+//                 data: e,
+//                 path: i.path,
+//                 parent: i
+//             });
+//         return FC(i, s)
+//     }
+//     async parseAsync(e, t) {
+//         const n = await this.safeParseAsync(e, t);
+//         if (n.success)
+//             return n.data;
+//         throw n.error
+//     }
+//     async safeParseAsync(e, t) {
+//         const n = {
+//             common: {
+//                 issues: [],
+//                 contextualErrorMap: t == null ? void 0 : t.errorMap,
+//                 async: !0
+//             },
+//             path: (t == null ? void 0 : t.path) || [],
+//             schemaErrorMap: this._def.errorMap,
+//             parent: null,
+//             data: e,
+//             parsedType: Gl(e)
+//         }
+//             , i = this._parse({
+//                 data: e,
+//                 path: n.path,
+//                 parent: n
+//             })
+//             , s = await (Qy(i) ? i : Promise.resolve(i));
+//         return FC(n, s)
+//     }
+//     refine(e, t) {
+//         const n = i => typeof t == "string" || typeof t > "u" ? {
+//             message: t
+//         } : typeof t == "function" ? t(i) : t;
+//         return this._refinement((i, s) => {
+//             const o = e(i)
+//                 , a = () => s.addIssue({
+//                     code: $e.custom,
+//                     ...n(i)
+//                 });
+//             return typeof Promise < "u" && o instanceof Promise ? o.then(c => c ? !0 : (a(),
+//                 !1)) : o ? !0 : (a(),
+//                     !1)
+//         }
+//         )
+//     }
+//     refinement(e, t) {
+//         return this._refinement((n, i) => e(n) ? !0 : (i.addIssue(typeof t == "function" ? t(n, i) : t),
+//             !1))
+//     }
+//     _refinement(e) {
+//         return new Ea({
+//             schema: this,
+//             typeName: Mt.ZodEffects,
+//             effect: {
+//                 type: "refinement",
+//                 refinement: e
+//             }
+//         })
+//     }
+//     superRefine(e) {
+//         return this._refinement(e)
+//     }
+//     optional() {
+//         return il.create(this, this._def)
+//     }
+//     nullable() {
+//         return Kf.create(this, this._def)
+//     }
+//     nullish() {
+//         return this.nullable().optional()
+//     }
+//     array() {
+//         return pa.create(this, this._def)
+//     }
+//     promise() {
+//         return o0.create(this, this._def)
+//     }
+//     or(e) {
+//         return Qg.create([this, e], this._def)
+//     }
+//     and(e) {
+//         return Xg.create(this, e, this._def)
+//     }
+//     transform(e) {
+//         return new Ea({
+//             ...Kt(this._def),
+//             schema: this,
+//             typeName: Mt.ZodEffects,
+//             effect: {
+//                 type: "transform",
+//                 transform: e
+//             }
+//         })
+//     }
+//     default(e) {
+//         const t = typeof e == "function" ? e : () => e;
+//         return new i1({
+//             ...Kt(this._def),
+//             innerType: this,
+//             defaultValue: t,
+//             typeName: Mt.ZodDefault
+//         })
+//     }
+//     brand() {
+//         return new tP({
+//             typeName: Mt.ZodBranded,
+//             type: this,
+//             ...Kt(this._def)
+//         })
+//     }
+//     catch(e) {
+//         const t = typeof e == "function" ? e : () => e;
+//         return new rw({
+//             ...Kt(this._def),
+//             innerType: this,
+//             catchValue: t,
+//             typeName: Mt.ZodCatch
+//         })
+//     }
+//     describe(e) {
+//         const t = this.constructor;
+//         return new t({
+//             ...this._def,
+//             description: e
+//         })
+//     }
+//     pipe(e) {
+//         return k1.create(this, e)
+//     }
+//     readonly() {
+//         return iw.create(this)
+//     }
+//     isOptional() {
+//         return this.safeParse(void 0).success
+//     }
+//     isNullable() {
+//         return this.safeParse(null).success
+//     }
+// }
+// const mee = /^c[^\s-]{8,}$/i
+//     , vee = /^[a-z][a-z0-9]*$/
+//     , yee = /^[0-9A-HJKMNP-TV-Z]{26}$/
+//     , wee = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i
+//     , bee = /^(?!\.)(?!.*\.\.)([A-Z0-9_+-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i
+//     , _ee = "^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$";
+// let I3;
+// const Eee = /^(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))$/
+//     , xee = /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/
+//     , See = r => r.precision ? r.offset ? new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${r.precision}}(([+-]\\d{2}(:?\\d{2})?)|Z)$`) : new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${r.precision}}Z$`) : r.precision === 0 ? r.offset ? new RegExp("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}(:?\\d{2})?)|Z)$") : new RegExp("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$") : r.offset ? new RegExp("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}(:?\\d{2})?)|Z)$") : new RegExp("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$");
+// function Aee(r, e) {
+//     return !!((e === "v4" || !e) && Eee.test(r) || (e === "v6" || !e) && xee.test(r))
+// }
+// class fa extends er {
+//     _parse(e) {
+//         if (this._def.coerce && (e.data = String(e.data)),
+//             this._getType(e) !== Je.string) {
+//             const s = this._getOrReturnCtx(e);
+//             return tt(s, {
+//                 code: $e.invalid_type,
+//                 expected: Je.string,
+//                 received: s.parsedType
+//             }),
+//                 Wt
+//         }
+//         const n = new Ki;
+//         let i;
+//         for (const s of this._def.checks)
+//             if (s.kind === "min")
+//                 e.data.length < s.value && (i = this._getOrReturnCtx(e, i),
+//                     tt(i, {
+//                         code: $e.too_small,
+//                         minimum: s.value,
+//                         type: "string",
+//                         inclusive: !0,
+//                         exact: !1,
+//                         message: s.message
+//                     }),
+//                     n.dirty());
+//             else if (s.kind === "max")
+//                 e.data.length > s.value && (i = this._getOrReturnCtx(e, i),
+//                     tt(i, {
+//                         code: $e.too_big,
+//                         maximum: s.value,
+//                         type: "string",
+//                         inclusive: !0,
+//                         exact: !1,
+//                         message: s.message
+//                     }),
+//                     n.dirty());
+//             else if (s.kind === "length") {
+//                 const o = e.data.length > s.value
+//                     , a = e.data.length < s.value;
+//                 (o || a) && (i = this._getOrReturnCtx(e, i),
+//                     o ? tt(i, {
+//                         code: $e.too_big,
+//                         maximum: s.value,
+//                         type: "string",
+//                         inclusive: !0,
+//                         exact: !0,
+//                         message: s.message
+//                     }) : a && tt(i, {
+//                         code: $e.too_small,
+//                         minimum: s.value,
+//                         type: "string",
+//                         inclusive: !0,
+//                         exact: !0,
+//                         message: s.message
+//                     }),
+//                     n.dirty())
+//             } else if (s.kind === "email")
+//                 bee.test(e.data) || (i = this._getOrReturnCtx(e, i),
+//                     tt(i, {
+//                         validation: "email",
+//                         code: $e.invalid_string,
+//                         message: s.message
+//                     }),
+//                     n.dirty());
+//             else if (s.kind === "emoji")
+//                 I3 || (I3 = new RegExp(_ee, "u")),
+//                     I3.test(e.data) || (i = this._getOrReturnCtx(e, i),
+//                         tt(i, {
+//                             validation: "emoji",
+//                             code: $e.invalid_string,
+//                             message: s.message
+//                         }),
+//                         n.dirty());
+//             else if (s.kind === "uuid")
+//                 wee.test(e.data) || (i = this._getOrReturnCtx(e, i),
+//                     tt(i, {
+//                         validation: "uuid",
+//                         code: $e.invalid_string,
+//                         message: s.message
+//                     }),
+//                     n.dirty());
+//             else if (s.kind === "cuid")
+//                 mee.test(e.data) || (i = this._getOrReturnCtx(e, i),
+//                     tt(i, {
+//                         validation: "cuid",
+//                         code: $e.invalid_string,
+//                         message: s.message
+//                     }),
+//                     n.dirty());
+//             else if (s.kind === "cuid2")
+//                 vee.test(e.data) || (i = this._getOrReturnCtx(e, i),
+//                     tt(i, {
+//                         validation: "cuid2",
+//                         code: $e.invalid_string,
+//                         message: s.message
+//                     }),
+//                     n.dirty());
+//             else if (s.kind === "ulid")
+//                 yee.test(e.data) || (i = this._getOrReturnCtx(e, i),
+//                     tt(i, {
+//                         validation: "ulid",
+//                         code: $e.invalid_string,
+//                         message: s.message
+//                     }),
+//                     n.dirty());
+//             else if (s.kind === "url")
+//                 try {
+//                     new URL(e.data)
+//                 } catch {
+//                     i = this._getOrReturnCtx(e, i),
+//                         tt(i, {
+//                             validation: "url",
+//                             code: $e.invalid_string,
+//                             message: s.message
+//                         }),
+//                         n.dirty()
+//                 }
+//             else
+//                 s.kind === "regex" ? (s.regex.lastIndex = 0,
+//                     s.regex.test(e.data) || (i = this._getOrReturnCtx(e, i),
+//                         tt(i, {
+//                             validation: "regex",
+//                             code: $e.invalid_string,
+//                             message: s.message
+//                         }),
+//                         n.dirty())) : s.kind === "trim" ? e.data = e.data.trim() : s.kind === "includes" ? e.data.includes(s.value, s.position) || (i = this._getOrReturnCtx(e, i),
+//                             tt(i, {
+//                                 code: $e.invalid_string,
+//                                 validation: {
+//                                     includes: s.value,
+//                                     position: s.position
+//                                 },
+//                                 message: s.message
+//                             }),
+//                             n.dirty()) : s.kind === "toLowerCase" ? e.data = e.data.toLowerCase() : s.kind === "toUpperCase" ? e.data = e.data.toUpperCase() : s.kind === "startsWith" ? e.data.startsWith(s.value) || (i = this._getOrReturnCtx(e, i),
+//                                 tt(i, {
+//                                     code: $e.invalid_string,
+//                                     validation: {
+//                                         startsWith: s.value
+//                                     },
+//                                     message: s.message
+//                                 }),
+//                                 n.dirty()) : s.kind === "endsWith" ? e.data.endsWith(s.value) || (i = this._getOrReturnCtx(e, i),
+//                                     tt(i, {
+//                                         code: $e.invalid_string,
+//                                         validation: {
+//                                             endsWith: s.value
+//                                         },
+//                                         message: s.message
+//                                     }),
+//                                     n.dirty()) : s.kind === "datetime" ? See(s).test(e.data) || (i = this._getOrReturnCtx(e, i),
+//                                         tt(i, {
+//                                             code: $e.invalid_string,
+//                                             validation: "datetime",
+//                                             message: s.message
+//                                         }),
+//                                         n.dirty()) : s.kind === "ip" ? Aee(e.data, s.version) || (i = this._getOrReturnCtx(e, i),
+//                                             tt(i, {
+//                                                 validation: "ip",
+//                                                 code: $e.invalid_string,
+//                                                 message: s.message
+//                                             }),
+//                                             n.dirty()) : Dr.assertNever(s);
+//         return {
+//             status: n.value,
+//             value: e.data
+//         }
+//     }
+//     _regex(e, t, n) {
+//         return this.refinement(i => e.test(i), {
+//             validation: t,
+//             code: $e.invalid_string,
+//             ...bt.errToObj(n)
+//         })
+//     }
+//     _addCheck(e) {
+//         return new fa({
+//             ...this._def,
+//             checks: [...this._def.checks, e]
+//         })
+//     }
+//     email(e) {
+//         return this._addCheck({
+//             kind: "email",
+//             ...bt.errToObj(e)
+//         })
+//     }
+//     url(e) {
+//         return this._addCheck({
+//             kind: "url",
+//             ...bt.errToObj(e)
+//         })
+//     }
+//     emoji(e) {
+//         return this._addCheck({
+//             kind: "emoji",
+//             ...bt.errToObj(e)
+//         })
+//     }
+//     uuid(e) {
+//         return this._addCheck({
+//             kind: "uuid",
+//             ...bt.errToObj(e)
+//         })
+//     }
+//     cuid(e) {
+//         return this._addCheck({
+//             kind: "cuid",
+//             ...bt.errToObj(e)
+//         })
+//     }
+//     cuid2(e) {
+//         return this._addCheck({
+//             kind: "cuid2",
+//             ...bt.errToObj(e)
+//         })
+//     }
+//     ulid(e) {
+//         return this._addCheck({
+//             kind: "ulid",
+//             ...bt.errToObj(e)
+//         })
+//     }
+//     ip(e) {
+//         return this._addCheck({
+//             kind: "ip",
+//             ...bt.errToObj(e)
+//         })
+//     }
+//     datetime(e) {
+//         var t;
+//         return typeof e == "string" ? this._addCheck({
+//             kind: "datetime",
+//             precision: null,
+//             offset: !1,
+//             message: e
+//         }) : this._addCheck({
+//             kind: "datetime",
+//             precision: typeof (e == null ? void 0 : e.precision) > "u" ? null : e == null ? void 0 : e.precision,
+//             offset: (t = e == null ? void 0 : e.offset) !== null && t !== void 0 ? t : !1,
+//             ...bt.errToObj(e == null ? void 0 : e.message)
+//         })
+//     }
+//     regex(e, t) {
+//         return this._addCheck({
+//             kind: "regex",
+//             regex: e,
+//             ...bt.errToObj(t)
+//         })
+//     }
+//     includes(e, t) {
+//         return this._addCheck({
+//             kind: "includes",
+//             value: e,
+//             position: t == null ? void 0 : t.position,
+//             ...bt.errToObj(t == null ? void 0 : t.message)
+//         })
+//     }
+//     startsWith(e, t) {
+//         return this._addCheck({
+//             kind: "startsWith",
+//             value: e,
+//             ...bt.errToObj(t)
+//         })
+//     }
+//     endsWith(e, t) {
+//         return this._addCheck({
+//             kind: "endsWith",
+//             value: e,
+//             ...bt.errToObj(t)
+//         })
+//     }
+//     min(e, t) {
+//         return this._addCheck({
+//             kind: "min",
+//             value: e,
+//             ...bt.errToObj(t)
+//         })
+//     }
+//     max(e, t) {
+//         return this._addCheck({
+//             kind: "max",
+//             value: e,
+//             ...bt.errToObj(t)
+//         })
+//     }
+//     length(e, t) {
+//         return this._addCheck({
+//             kind: "length",
+//             value: e,
+//             ...bt.errToObj(t)
+//         })
+//     }
+//     nonempty(e) {
+//         return this.min(1, bt.errToObj(e))
+//     }
+//     trim() {
+//         return new fa({
+//             ...this._def,
+//             checks: [...this._def.checks, {
+//                 kind: "trim"
+//             }]
+//         })
+//     }
+//     toLowerCase() {
+//         return new fa({
+//             ...this._def,
+//             checks: [...this._def.checks, {
+//                 kind: "toLowerCase"
+//             }]
+//         })
+//     }
+//     toUpperCase() {
+//         return new fa({
+//             ...this._def,
+//             checks: [...this._def.checks, {
+//                 kind: "toUpperCase"
+//             }]
+//         })
+//     }
+//     get isDatetime() {
+//         return !!this._def.checks.find(e => e.kind === "datetime")
+//     }
+//     get isEmail() {
+//         return !!this._def.checks.find(e => e.kind === "email")
+//     }
+//     get isURL() {
+//         return !!this._def.checks.find(e => e.kind === "url")
+//     }
+//     get isEmoji() {
+//         return !!this._def.checks.find(e => e.kind === "emoji")
+//     }
+//     get isUUID() {
+//         return !!this._def.checks.find(e => e.kind === "uuid")
+//     }
+//     get isCUID() {
+//         return !!this._def.checks.find(e => e.kind === "cuid")
+//     }
+//     get isCUID2() {
+//         return !!this._def.checks.find(e => e.kind === "cuid2")
+//     }
+//     get isULID() {
+//         return !!this._def.checks.find(e => e.kind === "ulid")
+//     }
+//     get isIP() {
+//         return !!this._def.checks.find(e => e.kind === "ip")
+//     }
+//     get minLength() {
+//         let e = null;
+//         for (const t of this._def.checks)
+//             t.kind === "min" && (e === null || t.value > e) && (e = t.value);
+//         return e
+//     }
+//     get maxLength() {
+//         let e = null;
+//         for (const t of this._def.checks)
+//             t.kind === "max" && (e === null || t.value < e) && (e = t.value);
+//         return e
+//     }
+// }
+// fa.create = r => {
+//     var e;
+//     return new fa({
+//         checks: [],
+//         typeName: Mt.ZodString,
+//         coerce: (e = r == null ? void 0 : r.coerce) !== null && e !== void 0 ? e : !1,
+//         ...Kt(r)
+//     })
+// }
+//     ;
+// function Cee(r, e) {
+//     const t = (r.toString().split(".")[1] || "").length
+//         , n = (e.toString().split(".")[1] || "").length
+//         , i = t > n ? t : n
+//         , s = parseInt(r.toFixed(i).replace(".", ""))
+//         , o = parseInt(e.toFixed(i).replace(".", ""));
+//     return s % o / Math.pow(10, i)
+// }
+// class uu extends er {
+//     constructor() {
+//         super(...arguments),
+//             this.min = this.gte,
+//             this.max = this.lte,
+//             this.step = this.multipleOf
+//     }
+//     _parse(e) {
+//         if (this._def.coerce && (e.data = Number(e.data)),
+//             this._getType(e) !== Je.number) {
+//             const s = this._getOrReturnCtx(e);
+//             return tt(s, {
+//                 code: $e.invalid_type,
+//                 expected: Je.number,
+//                 received: s.parsedType
+//             }),
+//                 Wt
+//         }
+//         let n;
+//         const i = new Ki;
+//         for (const s of this._def.checks)
+//             s.kind === "int" ? Dr.isInteger(e.data) || (n = this._getOrReturnCtx(e, n),
+//                 tt(n, {
+//                     code: $e.invalid_type,
+//                     expected: "integer",
+//                     received: "float",
+//                     message: s.message
+//                 }),
+//                 i.dirty()) : s.kind === "min" ? (s.inclusive ? e.data < s.value : e.data <= s.value) && (n = this._getOrReturnCtx(e, n),
+//                     tt(n, {
+//                         code: $e.too_small,
+//                         minimum: s.value,
+//                         type: "number",
+//                         inclusive: s.inclusive,
+//                         exact: !1,
+//                         message: s.message
+//                     }),
+//                     i.dirty()) : s.kind === "max" ? (s.inclusive ? e.data > s.value : e.data >= s.value) && (n = this._getOrReturnCtx(e, n),
+//                         tt(n, {
+//                             code: $e.too_big,
+//                             maximum: s.value,
+//                             type: "number",
+//                             inclusive: s.inclusive,
+//                             exact: !1,
+//                             message: s.message
+//                         }),
+//                         i.dirty()) : s.kind === "multipleOf" ? Cee(e.data, s.value) !== 0 && (n = this._getOrReturnCtx(e, n),
+//                             tt(n, {
+//                                 code: $e.not_multiple_of,
+//                                 multipleOf: s.value,
+//                                 message: s.message
+//                             }),
+//                             i.dirty()) : s.kind === "finite" ? Number.isFinite(e.data) || (n = this._getOrReturnCtx(e, n),
+//                                 tt(n, {
+//                                     code: $e.not_finite,
+//                                     message: s.message
+//                                 }),
+//                                 i.dirty()) : Dr.assertNever(s);
+//         return {
+//             status: i.value,
+//             value: e.data
+//         }
+//     }
+//     gte(e, t) {
+//         return this.setLimit("min", e, !0, bt.toString(t))
+//     }
+//     gt(e, t) {
+//         return this.setLimit("min", e, !1, bt.toString(t))
+//     }
+//     lte(e, t) {
+//         return this.setLimit("max", e, !0, bt.toString(t))
+//     }
+//     lt(e, t) {
+//         return this.setLimit("max", e, !1, bt.toString(t))
+//     }
+//     setLimit(e, t, n, i) {
+//         return new uu({
+//             ...this._def,
+//             checks: [...this._def.checks, {
+//                 kind: e,
+//                 value: t,
+//                 inclusive: n,
+//                 message: bt.toString(i)
+//             }]
+//         })
+//     }
+//     _addCheck(e) {
+//         return new uu({
+//             ...this._def,
+//             checks: [...this._def.checks, e]
+//         })
+//     }
+//     int(e) {
+//         return this._addCheck({
+//             kind: "int",
+//             message: bt.toString(e)
+//         })
+//     }
+//     positive(e) {
+//         return this._addCheck({
+//             kind: "min",
+//             value: 0,
+//             inclusive: !1,
+//             message: bt.toString(e)
+//         })
+//     }
+//     negative(e) {
+//         return this._addCheck({
+//             kind: "max",
+//             value: 0,
+//             inclusive: !1,
+//             message: bt.toString(e)
+//         })
+//     }
+//     nonpositive(e) {
+//         return this._addCheck({
+//             kind: "max",
+//             value: 0,
+//             inclusive: !0,
+//             message: bt.toString(e)
+//         })
+//     }
+//     nonnegative(e) {
+//         return this._addCheck({
+//             kind: "min",
+//             value: 0,
+//             inclusive: !0,
+//             message: bt.toString(e)
+//         })
+//     }
+//     multipleOf(e, t) {
+//         return this._addCheck({
+//             kind: "multipleOf",
+//             value: e,
+//             message: bt.toString(t)
+//         })
+//     }
+//     finite(e) {
+//         return this._addCheck({
+//             kind: "finite",
+//             message: bt.toString(e)
+//         })
+//     }
+//     safe(e) {
+//         return this._addCheck({
+//             kind: "min",
+//             inclusive: !0,
+//             value: Number.MIN_SAFE_INTEGER,
+//             message: bt.toString(e)
+//         })._addCheck({
+//             kind: "max",
+//             inclusive: !0,
+//             value: Number.MAX_SAFE_INTEGER,
+//             message: bt.toString(e)
+//         })
+//     }
+//     get minValue() {
+//         let e = null;
+//         for (const t of this._def.checks)
+//             t.kind === "min" && (e === null || t.value > e) && (e = t.value);
+//         return e
+//     }
+//     get maxValue() {
+//         let e = null;
+//         for (const t of this._def.checks)
+//             t.kind === "max" && (e === null || t.value < e) && (e = t.value);
+//         return e
+//     }
+//     get isInt() {
+//         return !!this._def.checks.find(e => e.kind === "int" || e.kind === "multipleOf" && Dr.isInteger(e.value))
+//     }
+//     get isFinite() {
+//         let e = null
+//             , t = null;
+//         for (const n of this._def.checks) {
+//             if (n.kind === "finite" || n.kind === "int" || n.kind === "multipleOf")
+//                 return !0;
+//             n.kind === "min" ? (t === null || n.value > t) && (t = n.value) : n.kind === "max" && (e === null || n.value < e) && (e = n.value)
+//         }
+//         return Number.isFinite(t) && Number.isFinite(e)
+//     }
+// }
+// uu.create = r => new uu({
+//     checks: [],
+//     typeName: Mt.ZodNumber,
+//     coerce: (r == null ? void 0 : r.coerce) || !1,
+//     ...Kt(r)
+// });
+// class fu extends er {
+//     constructor() {
+//         super(...arguments),
+//             this.min = this.gte,
+//             this.max = this.lte
+//     }
+//     _parse(e) {
+//         if (this._def.coerce && (e.data = BigInt(e.data)),
+//             this._getType(e) !== Je.bigint) {
+//             const s = this._getOrReturnCtx(e);
+//             return tt(s, {
+//                 code: $e.invalid_type,
+//                 expected: Je.bigint,
+//                 received: s.parsedType
+//             }),
+//                 Wt
+//         }
+//         let n;
+//         const i = new Ki;
+//         for (const s of this._def.checks)
+//             s.kind === "min" ? (s.inclusive ? e.data < s.value : e.data <= s.value) && (n = this._getOrReturnCtx(e, n),
+//                 tt(n, {
+//                     code: $e.too_small,
+//                     type: "bigint",
+//                     minimum: s.value,
+//                     inclusive: s.inclusive,
+//                     message: s.message
+//                 }),
+//                 i.dirty()) : s.kind === "max" ? (s.inclusive ? e.data > s.value : e.data >= s.value) && (n = this._getOrReturnCtx(e, n),
+//                     tt(n, {
+//                         code: $e.too_big,
+//                         type: "bigint",
+//                         maximum: s.value,
+//                         inclusive: s.inclusive,
+//                         message: s.message
+//                     }),
+//                     i.dirty()) : s.kind === "multipleOf" ? e.data % s.value !== BigInt(0) && (n = this._getOrReturnCtx(e, n),
+//                         tt(n, {
+//                             code: $e.not_multiple_of,
+//                             multipleOf: s.value,
+//                             message: s.message
+//                         }),
+//                         i.dirty()) : Dr.assertNever(s);
+//         return {
+//             status: i.value,
+//             value: e.data
+//         }
+//     }
+//     gte(e, t) {
+//         return this.setLimit("min", e, !0, bt.toString(t))
+//     }
+//     gt(e, t) {
+//         return this.setLimit("min", e, !1, bt.toString(t))
+//     }
+//     lte(e, t) {
+//         return this.setLimit("max", e, !0, bt.toString(t))
+//     }
+//     lt(e, t) {
+//         return this.setLimit("max", e, !1, bt.toString(t))
+//     }
+//     setLimit(e, t, n, i) {
+//         return new fu({
+//             ...this._def,
+//             checks: [...this._def.checks, {
+//                 kind: e,
+//                 value: t,
+//                 inclusive: n,
+//                 message: bt.toString(i)
+//             }]
+//         })
+//     }
+//     _addCheck(e) {
+//         return new fu({
+//             ...this._def,
+//             checks: [...this._def.checks, e]
+//         })
+//     }
+//     positive(e) {
+//         return this._addCheck({
+//             kind: "min",
+//             value: BigInt(0),
+//             inclusive: !1,
+//             message: bt.toString(e)
+//         })
+//     }
+//     negative(e) {
+//         return this._addCheck({
+//             kind: "max",
+//             value: BigInt(0),
+//             inclusive: !1,
+//             message: bt.toString(e)
+//         })
+//     }
+//     nonpositive(e) {
+//         return this._addCheck({
+//             kind: "max",
+//             value: BigInt(0),
+//             inclusive: !0,
+//             message: bt.toString(e)
+//         })
+//     }
+//     nonnegative(e) {
+//         return this._addCheck({
+//             kind: "min",
+//             value: BigInt(0),
+//             inclusive: !0,
+//             message: bt.toString(e)
+//         })
+//     }
+//     multipleOf(e, t) {
+//         return this._addCheck({
+//             kind: "multipleOf",
+//             value: e,
+//             message: bt.toString(t)
+//         })
+//     }
+//     get minValue() {
+//         let e = null;
+//         for (const t of this._def.checks)
+//             t.kind === "min" && (e === null || t.value > e) && (e = t.value);
+//         return e
+//     }
+//     get maxValue() {
+//         let e = null;
+//         for (const t of this._def.checks)
+//             t.kind === "max" && (e === null || t.value < e) && (e = t.value);
+//         return e
+//     }
+// }
+// fu.create = r => {
+//     var e;
+//     return new fu({
+//         checks: [],
+//         typeName: Mt.ZodBigInt,
+//         coerce: (e = r == null ? void 0 : r.coerce) !== null && e !== void 0 ? e : !1,
+//         ...Kt(r)
+//     })
+// }
+//     ;
+// class Zg extends er {
+//     _parse(e) {
+//         if (this._def.coerce && (e.data = !!e.data),
+//             this._getType(e) !== Je.boolean) {
+//             const n = this._getOrReturnCtx(e);
+//             return tt(n, {
+//                 code: $e.invalid_type,
+//                 expected: Je.boolean,
+//                 received: n.parsedType
+//             }),
+//                 Wt
+//         }
+//         return hs(e.data)
+//     }
+// }
+// Zg.create = r => new Zg({
+//     typeName: Mt.ZodBoolean,
+//     coerce: (r == null ? void 0 : r.coerce) || !1,
+//     ...Kt(r)
+// });
+// class qf extends er {
+//     _parse(e) {
+//         if (this._def.coerce && (e.data = new Date(e.data)),
+//             this._getType(e) !== Je.date) {
+//             const s = this._getOrReturnCtx(e);
+//             return tt(s, {
+//                 code: $e.invalid_type,
+//                 expected: Je.date,
+//                 received: s.parsedType
+//             }),
+//                 Wt
+//         }
+//         if (isNaN(e.data.getTime())) {
+//             const s = this._getOrReturnCtx(e);
+//             return tt(s, {
+//                 code: $e.invalid_date
+//             }),
+//                 Wt
+//         }
+//         const n = new Ki;
+//         let i;
+//         for (const s of this._def.checks)
+//             s.kind === "min" ? e.data.getTime() < s.value && (i = this._getOrReturnCtx(e, i),
+//                 tt(i, {
+//                     code: $e.too_small,
+//                     message: s.message,
+//                     inclusive: !0,
+//                     exact: !1,
+//                     minimum: s.value,
+//                     type: "date"
+//                 }),
+//                 n.dirty()) : s.kind === "max" ? e.data.getTime() > s.value && (i = this._getOrReturnCtx(e, i),
+//                     tt(i, {
+//                         code: $e.too_big,
+//                         message: s.message,
+//                         inclusive: !0,
+//                         exact: !1,
+//                         maximum: s.value,
+//                         type: "date"
+//                     }),
+//                     n.dirty()) : Dr.assertNever(s);
+//         return {
+//             status: n.value,
+//             value: new Date(e.data.getTime())
+//         }
+//     }
+//     _addCheck(e) {
+//         return new qf({
+//             ...this._def,
+//             checks: [...this._def.checks, e]
+//         })
+//     }
+//     min(e, t) {
+//         return this._addCheck({
+//             kind: "min",
+//             value: e.getTime(),
+//             message: bt.toString(t)
+//         })
+//     }
+//     max(e, t) {
+//         return this._addCheck({
+//             kind: "max",
+//             value: e.getTime(),
+//             message: bt.toString(t)
+//         })
+//     }
+//     get minDate() {
+//         let e = null;
+//         for (const t of this._def.checks)
+//             t.kind === "min" && (e === null || t.value > e) && (e = t.value);
+//         return e != null ? new Date(e) : null
+//     }
+//     get maxDate() {
+//         let e = null;
+//         for (const t of this._def.checks)
+//             t.kind === "max" && (e === null || t.value < e) && (e = t.value);
+//         return e != null ? new Date(e) : null
+//     }
+// }
+// qf.create = r => new qf({
+//     checks: [],
+//     coerce: (r == null ? void 0 : r.coerce) || !1,
+//     typeName: Mt.ZodDate,
+//     ...Kt(r)
+// });
+// class Xy extends er {
+//     _parse(e) {
+//         if (this._getType(e) !== Je.symbol) {
+//             const n = this._getOrReturnCtx(e);
+//             return tt(n, {
+//                 code: $e.invalid_type,
+//                 expected: Je.symbol,
+//                 received: n.parsedType
+//             }),
+//                 Wt
+//         }
+//         return hs(e.data)
+//     }
+// }
+// Xy.create = r => new Xy({
+//     typeName: Mt.ZodSymbol,
+//     ...Kt(r)
+// });
+// class Jg extends er {
+//     _parse(e) {
+//         if (this._getType(e) !== Je.undefined) {
+//             const n = this._getOrReturnCtx(e);
+//             return tt(n, {
+//                 code: $e.invalid_type,
+//                 expected: Je.undefined,
+//                 received: n.parsedType
+//             }),
+//                 Wt
+//         }
+//         return hs(e.data)
+//     }
+// }
+// Jg.create = r => new Jg({
+//     typeName: Mt.ZodUndefined,
+//     ...Kt(r)
+// });
+// class Yg extends er {
+//     _parse(e) {
+//         if (this._getType(e) !== Je.null) {
+//             const n = this._getOrReturnCtx(e);
+//             return tt(n, {
+//                 code: $e.invalid_type,
+//                 expected: Je.null,
+//                 received: n.parsedType
+//             }),
+//                 Wt
+//         }
+//         return hs(e.data)
+//     }
+// }
+// Yg.create = r => new Yg({
+//     typeName: Mt.ZodNull,
+//     ...Kt(r)
+// });
+// class s0 extends er {
+//     constructor() {
+//         super(...arguments),
+//             this._any = !0
+//     }
+//     _parse(e) {
+//         return hs(e.data)
+//     }
+// }
+// s0.create = r => new s0({
+//     typeName: Mt.ZodAny,
+//     ...Kt(r)
+// });
+// class Ef extends er {
+//     constructor() {
+//         super(...arguments),
+//             this._unknown = !0
+//     }
+//     _parse(e) {
+//         return hs(e.data)
+//     }
+// }
+// Ef.create = r => new Ef({
+//     typeName: Mt.ZodUnknown,
+//     ...Kt(r)
+// });
+// class fl extends er {
+//     _parse(e) {
+//         const t = this._getOrReturnCtx(e);
+//         return tt(t, {
+//             code: $e.invalid_type,
+//             expected: Je.never,
+//             received: t.parsedType
+//         }),
+//             Wt
+//     }
+// }
+// fl.create = r => new fl({
+//     typeName: Mt.ZodNever,
+//     ...Kt(r)
+// });
+// class ew extends er {
+//     _parse(e) {
+//         if (this._getType(e) !== Je.undefined) {
+//             const n = this._getOrReturnCtx(e);
+//             return tt(n, {
+//                 code: $e.invalid_type,
+//                 expected: Je.void,
+//                 received: n.parsedType
+//             }),
+//                 Wt
+//         }
+//         return hs(e.data)
+//     }
+// }
+// ew.create = r => new ew({
+//     typeName: Mt.ZodVoid,
+//     ...Kt(r)
+// });
+// class pa extends er {
+//     _parse(e) {
+//         const { ctx: t, status: n } = this._processInputParams(e)
+//             , i = this._def;
+//         if (t.parsedType !== Je.array)
+//             return tt(t, {
+//                 code: $e.invalid_type,
+//                 expected: Je.array,
+//                 received: t.parsedType
+//             }),
+//                 Wt;
+//         if (i.exactLength !== null) {
+//             const o = t.data.length > i.exactLength.value
+//                 , a = t.data.length < i.exactLength.value;
+//             (o || a) && (tt(t, {
+//                 code: o ? $e.too_big : $e.too_small,
+//                 minimum: a ? i.exactLength.value : void 0,
+//                 maximum: o ? i.exactLength.value : void 0,
+//                 type: "array",
+//                 inclusive: !0,
+//                 exact: !0,
+//                 message: i.exactLength.message
+//             }),
+//                 n.dirty())
+//         }
+//         if (i.minLength !== null && t.data.length < i.minLength.value && (tt(t, {
+//             code: $e.too_small,
+//             minimum: i.minLength.value,
+//             type: "array",
+//             inclusive: !0,
+//             exact: !1,
+//             message: i.minLength.message
+//         }),
+//             n.dirty()),
+//             i.maxLength !== null && t.data.length > i.maxLength.value && (tt(t, {
+//                 code: $e.too_big,
+//                 maximum: i.maxLength.value,
+//                 type: "array",
+//                 inclusive: !0,
+//                 exact: !1,
+//                 message: i.maxLength.message
+//             }),
+//                 n.dirty()),
+//             t.common.async)
+//             return Promise.all([...t.data].map((o, a) => i.type._parseAsync(new mc(t, o, t.path, a)))).then(o => Ki.mergeArray(n, o));
+//         const s = [...t.data].map((o, a) => i.type._parseSync(new mc(t, o, t.path, a)));
+//         return Ki.mergeArray(n, s)
+//     }
+//     get element() {
+//         return this._def.type
+//     }
+//     min(e, t) {
+//         return new pa({
+//             ...this._def,
+//             minLength: {
+//                 value: e,
+//                 message: bt.toString(t)
+//             }
+//         })
+//     }
+//     max(e, t) {
+//         return new pa({
+//             ...this._def,
+//             maxLength: {
+//                 value: e,
+//                 message: bt.toString(t)
+//             }
+//         })
+//     }
+//     length(e, t) {
+//         return new pa({
+//             ...this._def,
+//             exactLength: {
+//                 value: e,
+//                 message: bt.toString(t)
+//             }
+//         })
+//     }
+//     nonempty(e) {
+//         return this.min(1, e)
+//     }
+// }
+// pa.create = (r, e) => new pa({
+//     type: r,
+//     minLength: null,
+//     maxLength: null,
+//     exactLength: null,
+//     typeName: Mt.ZodArray,
+//     ...Kt(e)
+// });
+// function od(r) {
+//     if (r instanceof yn) {
+//         const e = {};
+//         for (const t in r.shape) {
+//             const n = r.shape[t];
+//             e[t] = il.create(od(n))
+//         }
+//         return new yn({
+//             ...r._def,
+//             shape: () => e
+//         })
+//     } else
+//         return r instanceof pa ? new pa({
+//             ...r._def,
+//             type: od(r.element)
+//         }) : r instanceof il ? il.create(od(r.unwrap())) : r instanceof Kf ? Kf.create(od(r.unwrap())) : r instanceof vc ? vc.create(r.items.map(e => od(e))) : r
+// }
+// class yn extends er {
+//     constructor() {
+//         super(...arguments),
+//             this._cached = null,
+//             this.nonstrict = this.passthrough,
+//             this.augment = this.extend
+//     }
+//     _getCached() {
+//         if (this._cached !== null)
+//             return this._cached;
+//         const e = this._def.shape()
+//             , t = Dr.objectKeys(e);
+//         return this._cached = {
+//             shape: e,
+//             keys: t
+//         }
+//     }
+//     _parse(e) {
+//         if (this._getType(e) !== Je.object) {
+//             const u = this._getOrReturnCtx(e);
+//             return tt(u, {
+//                 code: $e.invalid_type,
+//                 expected: Je.object,
+//                 received: u.parsedType
+//             }),
+//                 Wt
+//         }
+//         const { status: n, ctx: i } = this._processInputParams(e)
+//             , { shape: s, keys: o } = this._getCached()
+//             , a = [];
+//         if (!(this._def.catchall instanceof fl && this._def.unknownKeys === "strip"))
+//             for (const u in i.data)
+//                 o.includes(u) || a.push(u);
+//         const c = [];
+//         for (const u of o) {
+//             const d = s[u]
+//                 , f = i.data[u];
+//             c.push({
+//                 key: {
+//                     status: "valid",
+//                     value: u
+//                 },
+//                 value: d._parse(new mc(i, f, i.path, u)),
+//                 alwaysSet: u in i.data
+//             })
+//         }
+//         if (this._def.catchall instanceof fl) {
+//             const u = this._def.unknownKeys;
+//             if (u === "passthrough")
+//                 for (const d of a)
+//                     c.push({
+//                         key: {
+//                             status: "valid",
+//                             value: d
+//                         },
+//                         value: {
+//                             status: "valid",
+//                             value: i.data[d]
+//                         }
+//                     });
+//             else if (u === "strict")
+//                 a.length > 0 && (tt(i, {
+//                     code: $e.unrecognized_keys,
+//                     keys: a
+//                 }),
+//                     n.dirty());
+//             else if (u !== "strip")
+//                 throw new Error("Internal ZodObject error: invalid unknownKeys value.")
+//         } else {
+//             const u = this._def.catchall;
+//             for (const d of a) {
+//                 const f = i.data[d];
+//                 c.push({
+//                     key: {
+//                         status: "valid",
+//                         value: d
+//                     },
+//                     value: u._parse(new mc(i, f, i.path, d)),
+//                     alwaysSet: d in i.data
+//                 })
+//             }
+//         }
+//         return i.common.async ? Promise.resolve().then(async () => {
+//             const u = [];
+//             for (const d of c) {
+//                 const f = await d.key;
+//                 u.push({
+//                     key: f,
+//                     value: await d.value,
+//                     alwaysSet: d.alwaysSet
+//                 })
+//             }
+//             return u
+//         }
+//         ).then(u => Ki.mergeObjectSync(n, u)) : Ki.mergeObjectSync(n, c)
+//     }
+//     get shape() {
+//         return this._def.shape()
+//     }
+//     strict(e) {
+//         return bt.errToObj,
+//             new yn({
+//                 ...this._def,
+//                 unknownKeys: "strict",
+//                 ...e !== void 0 ? {
+//                     errorMap: (t, n) => {
+//                         var i, s, o, a;
+//                         const c = (o = (s = (i = this._def).errorMap) === null || s === void 0 ? void 0 : s.call(i, t, n).message) !== null && o !== void 0 ? o : n.defaultError;
+//                         return t.code === "unrecognized_keys" ? {
+//                             message: (a = bt.errToObj(e).message) !== null && a !== void 0 ? a : c
+//                         } : {
+//                             message: c
+//                         }
+//                     }
+//                 } : {}
+//             })
+//     }
+//     strip() {
+//         return new yn({
+//             ...this._def,
+//             unknownKeys: "strip"
+//         })
+//     }
+//     passthrough() {
+//         return new yn({
+//             ...this._def,
+//             unknownKeys: "passthrough"
+//         })
+//     }
+//     extend(e) {
+//         return new yn({
+//             ...this._def,
+//             shape: () => ({
+//                 ...this._def.shape(),
+//                 ...e
+//             })
+//         })
+//     }
+//     merge(e) {
+//         return new yn({
+//             unknownKeys: e._def.unknownKeys,
+//             catchall: e._def.catchall,
+//             shape: () => ({
+//                 ...this._def.shape(),
+//                 ...e._def.shape()
+//             }),
+//             typeName: Mt.ZodObject
+//         })
+//     }
+//     setKey(e, t) {
+//         return this.augment({
+//             [e]: t
+//         })
+//     }
+//     catchall(e) {
+//         return new yn({
+//             ...this._def,
+//             catchall: e
+//         })
+//     }
+//     pick(e) {
+//         const t = {};
+//         return Dr.objectKeys(e).forEach(n => {
+//             e[n] && this.shape[n] && (t[n] = this.shape[n])
+//         }
+//         ),
+//             new yn({
+//                 ...this._def,
+//                 shape: () => t
+//             })
+//     }
+//     omit(e) {
+//         const t = {};
+//         return Dr.objectKeys(this.shape).forEach(n => {
+//             e[n] || (t[n] = this.shape[n])
+//         }
+//         ),
+//             new yn({
+//                 ...this._def,
+//                 shape: () => t
+//             })
+//     }
+//     deepPartial() {
+//         return od(this)
+//     }
+//     partial(e) {
+//         const t = {};
+//         return Dr.objectKeys(this.shape).forEach(n => {
+//             const i = this.shape[n];
+//             e && !e[n] ? t[n] = i : t[n] = i.optional()
+//         }
+//         ),
+//             new yn({
+//                 ...this._def,
+//                 shape: () => t
+//             })
+//     }
+//     required(e) {
+//         const t = {};
+//         return Dr.objectKeys(this.shape).forEach(n => {
+//             if (e && !e[n])
+//                 t[n] = this.shape[n];
+//             else {
+//                 let s = this.shape[n];
+//                 for (; s instanceof il;)
+//                     s = s._def.innerType;
+//                 t[n] = s
+//             }
+//         }
+//         ),
+//             new yn({
+//                 ...this._def,
+//                 shape: () => t
+//             })
+//     }
+//     keyof() {
+//         return eP(Dr.objectKeys(this.shape))
+//     }
+// }
+// yn.create = (r, e) => new yn({
+//     shape: () => r,
+//     unknownKeys: "strip",
+//     catchall: fl.create(),
+//     typeName: Mt.ZodObject,
+//     ...Kt(e)
+// });
+// yn.strictCreate = (r, e) => new yn({
+//     shape: () => r,
+//     unknownKeys: "strict",
+//     catchall: fl.create(),
+//     typeName: Mt.ZodObject,
+//     ...Kt(e)
+// });
+// yn.lazycreate = (r, e) => new yn({
+//     shape: r,
+//     unknownKeys: "strip",
+//     catchall: fl.create(),
+//     typeName: Mt.ZodObject,
+//     ...Kt(e)
+// });
+// class Qg extends er {
+//     _parse(e) {
+//         const { ctx: t } = this._processInputParams(e)
+//             , n = this._def.options;
+//         function i(s) {
+//             for (const a of s)
+//                 if (a.result.status === "valid")
+//                     return a.result;
+//             for (const a of s)
+//                 if (a.result.status === "dirty")
+//                     return t.common.issues.push(...a.ctx.common.issues),
+//                         a.result;
+//             const o = s.map(a => new da(a.ctx.common.issues));
+//             return tt(t, {
+//                 code: $e.invalid_union,
+//                 unionErrors: o
+//             }),
+//                 Wt
+//         }
+//         if (t.common.async)
+//             return Promise.all(n.map(async s => {
+//                 const o = {
+//                     ...t,
+//                     common: {
+//                         ...t.common,
+//                         issues: []
+//                     },
+//                     parent: null
+//                 };
+//                 return {
+//                     result: await s._parseAsync({
+//                         data: t.data,
+//                         path: t.path,
+//                         parent: o
+//                     }),
+//                     ctx: o
+//                 }
+//             }
+//             )).then(i);
+//         {
+//             let s;
+//             const o = [];
+//             for (const c of n) {
+//                 const u = {
+//                     ...t,
+//                     common: {
+//                         ...t.common,
+//                         issues: []
+//                     },
+//                     parent: null
+//                 }
+//                     , d = c._parseSync({
+//                         data: t.data,
+//                         path: t.path,
+//                         parent: u
+//                     });
+//                 if (d.status === "valid")
+//                     return d;
+//                 d.status === "dirty" && !s && (s = {
+//                     result: d,
+//                     ctx: u
+//                 }),
+//                     u.common.issues.length && o.push(u.common.issues)
+//             }
+//             if (s)
+//                 return t.common.issues.push(...s.ctx.common.issues),
+//                     s.result;
+//             const a = o.map(c => new da(c));
+//             return tt(t, {
+//                 code: $e.invalid_union,
+//                 unionErrors: a
+//             }),
+//                 Wt
+//         }
+//     }
+//     get options() {
+//         return this._def.options
+//     }
+// }
+// Qg.create = (r, e) => new Qg({
+//     options: r,
+//     typeName: Mt.ZodUnion,
+//     ...Kt(e)
+// });
+// const fy = r => r instanceof t1 ? fy(r.schema) : r instanceof Ea ? fy(r.innerType()) : r instanceof r1 ? [r.value] : r instanceof hu ? r.options : r instanceof n1 ? Object.keys(r.enum) : r instanceof i1 ? fy(r._def.innerType) : r instanceof Jg ? [void 0] : r instanceof Yg ? [null] : null;
+// class lb extends er {
+//     _parse(e) {
+//         const { ctx: t } = this._processInputParams(e);
+//         if (t.parsedType !== Je.object)
+//             return tt(t, {
+//                 code: $e.invalid_type,
+//                 expected: Je.object,
+//                 received: t.parsedType
+//             }),
+//                 Wt;
+//         const n = this.discriminator
+//             , i = t.data[n]
+//             , s = this.optionsMap.get(i);
+//         return s ? t.common.async ? s._parseAsync({
+//             data: t.data,
+//             path: t.path,
+//             parent: t
+//         }) : s._parseSync({
+//             data: t.data,
+//             path: t.path,
+//             parent: t
+//         }) : (tt(t, {
+//             code: $e.invalid_union_discriminator,
+//             options: Array.from(this.optionsMap.keys()),
+//             path: [n]
+//         }),
+//             Wt)
+//     }
+//     get discriminator() {
+//         return this._def.discriminator
+//     }
+//     get options() {
+//         return this._def.options
+//     }
+//     get optionsMap() {
+//         return this._def.optionsMap
+//     }
+//     static create(e, t, n) {
+//         const i = new Map;
+//         for (const s of t) {
+//             const o = fy(s.shape[e]);
+//             if (!o)
+//                 throw new Error(`A discriminator value for key \`${e}\` could not be extracted from all schema options`);
+//             for (const a of o) {
+//                 if (i.has(a))
+//                     throw new Error(`Discriminator property ${String(e)} has duplicate value ${String(a)}`);
+//                 i.set(a, s)
+//             }
+//         }
+//         return new lb({
+//             typeName: Mt.ZodDiscriminatedUnion,
+//             discriminator: e,
+//             options: t,
+//             optionsMap: i,
+//             ...Kt(n)
+//         })
+//     }
+// }
+// function bE(r, e) {
+//     const t = Gl(r)
+//         , n = Gl(e);
+//     if (r === e)
+//         return {
+//             valid: !0,
+//             data: r
+//         };
+//     if (t === Je.object && n === Je.object) {
+//         const i = Dr.objectKeys(e)
+//             , s = Dr.objectKeys(r).filter(a => i.indexOf(a) !== -1)
+//             , o = {
+//                 ...r,
+//                 ...e
+//             };
+//         for (const a of s) {
+//             const c = bE(r[a], e[a]);
+//             if (!c.valid)
+//                 return {
+//                     valid: !1
+//                 };
+//             o[a] = c.data
+//         }
+//         return {
+//             valid: !0,
+//             data: o
+//         }
+//     } else if (t === Je.array && n === Je.array) {
+//         if (r.length !== e.length)
+//             return {
+//                 valid: !1
+//             };
+//         const i = [];
+//         for (let s = 0; s < r.length; s++) {
+//             const o = r[s]
+//                 , a = e[s]
+//                 , c = bE(o, a);
+//             if (!c.valid)
+//                 return {
+//                     valid: !1
+//                 };
+//             i.push(c.data)
+//         }
+//         return {
+//             valid: !0,
+//             data: i
+//         }
+//     } else
+//         return t === Je.date && n === Je.date && +r == +e ? {
+//             valid: !0,
+//             data: r
+//         } : {
+//             valid: !1
+//         }
+// }
+// class Xg extends er {
+//     _parse(e) {
+//         const { status: t, ctx: n } = this._processInputParams(e)
+//             , i = (s, o) => {
+//                 if (yE(s) || yE(o))
+//                     return Wt;
+//                 const a = bE(s.value, o.value);
+//                 return a.valid ? ((wE(s) || wE(o)) && t.dirty(),
+//                 {
+//                     status: t.value,
+//                     value: a.data
+//                 }) : (tt(n, {
+//                     code: $e.invalid_intersection_types
+//                 }),
+//                     Wt)
+//             }
+//             ;
+//         return n.common.async ? Promise.all([this._def.left._parseAsync({
+//             data: n.data,
+//             path: n.path,
+//             parent: n
+//         }), this._def.right._parseAsync({
+//             data: n.data,
+//             path: n.path,
+//             parent: n
+//         })]).then(([s, o]) => i(s, o)) : i(this._def.left._parseSync({
+//             data: n.data,
+//             path: n.path,
+//             parent: n
+//         }), this._def.right._parseSync({
+//             data: n.data,
+//             path: n.path,
+//             parent: n
+//         }))
+//     }
+// }
+// Xg.create = (r, e, t) => new Xg({
+//     left: r,
+//     right: e,
+//     typeName: Mt.ZodIntersection,
+//     ...Kt(t)
+// });
+// class vc extends er {
+//     _parse(e) {
+//         const { status: t, ctx: n } = this._processInputParams(e);
+//         if (n.parsedType !== Je.array)
+//             return tt(n, {
+//                 code: $e.invalid_type,
+//                 expected: Je.array,
+//                 received: n.parsedType
+//             }),
+//                 Wt;
+//         if (n.data.length < this._def.items.length)
+//             return tt(n, {
+//                 code: $e.too_small,
+//                 minimum: this._def.items.length,
+//                 inclusive: !0,
+//                 exact: !1,
+//                 type: "array"
+//             }),
+//                 Wt;
+//         !this._def.rest && n.data.length > this._def.items.length && (tt(n, {
+//             code: $e.too_big,
+//             maximum: this._def.items.length,
+//             inclusive: !0,
+//             exact: !1,
+//             type: "array"
+//         }),
+//             t.dirty());
+//         const s = [...n.data].map((o, a) => {
+//             const c = this._def.items[a] || this._def.rest;
+//             return c ? c._parse(new mc(n, o, n.path, a)) : null
+//         }
+//         ).filter(o => !!o);
+//         return n.common.async ? Promise.all(s).then(o => Ki.mergeArray(t, o)) : Ki.mergeArray(t, s)
+//     }
+//     get items() {
+//         return this._def.items
+//     }
+//     rest(e) {
+//         return new vc({
+//             ...this._def,
+//             rest: e
+//         })
+//     }
+// }
+// vc.create = (r, e) => {
+//     if (!Array.isArray(r))
+//         throw new Error("You must pass an array of schemas to z.tuple([ ... ])");
+//     return new vc({
+//         items: r,
+//         typeName: Mt.ZodTuple,
+//         rest: null,
+//         ...Kt(e)
+//     })
+// }
+//     ;
+// class e1 extends er {
+//     get keySchema() {
+//         return this._def.keyType
+//     }
+//     get valueSchema() {
+//         return this._def.valueType
+//     }
+//     _parse(e) {
+//         const { status: t, ctx: n } = this._processInputParams(e);
+//         if (n.parsedType !== Je.object)
+//             return tt(n, {
+//                 code: $e.invalid_type,
+//                 expected: Je.object,
+//                 received: n.parsedType
+//             }),
+//                 Wt;
+//         const i = []
+//             , s = this._def.keyType
+//             , o = this._def.valueType;
+//         for (const a in n.data)
+//             i.push({
+//                 key: s._parse(new mc(n, a, n.path, a)),
+//                 value: o._parse(new mc(n, n.data[a], n.path, a))
+//             });
+//         return n.common.async ? Ki.mergeObjectAsync(t, i) : Ki.mergeObjectSync(t, i)
+//     }
+//     get element() {
+//         return this._def.valueType
+//     }
+//     static create(e, t, n) {
+//         return t instanceof er ? new e1({
+//             keyType: e,
+//             valueType: t,
+//             typeName: Mt.ZodRecord,
+//             ...Kt(n)
+//         }) : new e1({
+//             keyType: fa.create(),
+//             valueType: e,
+//             typeName: Mt.ZodRecord,
+//             ...Kt(t)
+//         })
+//     }
+// }
+// class tw extends er {
+//     get keySchema() {
+//         return this._def.keyType
+//     }
+//     get valueSchema() {
+//         return this._def.valueType
+//     }
+//     _parse(e) {
+//         const { status: t, ctx: n } = this._processInputParams(e);
+//         if (n.parsedType !== Je.map)
+//             return tt(n, {
+//                 code: $e.invalid_type,
+//                 expected: Je.map,
+//                 received: n.parsedType
+//             }),
+//                 Wt;
+//         const i = this._def.keyType
+//             , s = this._def.valueType
+//             , o = [...n.data.entries()].map(([a, c], u) => ({
+//                 key: i._parse(new mc(n, a, n.path, [u, "key"])),
+//                 value: s._parse(new mc(n, c, n.path, [u, "value"]))
+//             }));
+//         if (n.common.async) {
+//             const a = new Map;
+//             return Promise.resolve().then(async () => {
+//                 for (const c of o) {
+//                     const u = await c.key
+//                         , d = await c.value;
+//                     if (u.status === "aborted" || d.status === "aborted")
+//                         return Wt;
+//                     (u.status === "dirty" || d.status === "dirty") && t.dirty(),
+//                         a.set(u.value, d.value)
+//                 }
+//                 return {
+//                     status: t.value,
+//                     value: a
+//                 }
+//             }
+//             )
+//         } else {
+//             const a = new Map;
+//             for (const c of o) {
+//                 const u = c.key
+//                     , d = c.value;
+//                 if (u.status === "aborted" || d.status === "aborted")
+//                     return Wt;
+//                 (u.status === "dirty" || d.status === "dirty") && t.dirty(),
+//                     a.set(u.value, d.value)
+//             }
+//             return {
+//                 status: t.value,
+//                 value: a
+//             }
+//         }
+//     }
+// }
+// tw.create = (r, e, t) => new tw({
+//     valueType: e,
+//     keyType: r,
+//     typeName: Mt.ZodMap,
+//     ...Kt(t)
+// });
+// class Gf extends er {
+//     _parse(e) {
+//         const { status: t, ctx: n } = this._processInputParams(e);
+//         if (n.parsedType !== Je.set)
+//             return tt(n, {
+//                 code: $e.invalid_type,
+//                 expected: Je.set,
+//                 received: n.parsedType
+//             }),
+//                 Wt;
+//         const i = this._def;
+//         i.minSize !== null && n.data.size < i.minSize.value && (tt(n, {
+//             code: $e.too_small,
+//             minimum: i.minSize.value,
+//             type: "set",
+//             inclusive: !0,
+//             exact: !1,
+//             message: i.minSize.message
+//         }),
+//             t.dirty()),
+//             i.maxSize !== null && n.data.size > i.maxSize.value && (tt(n, {
+//                 code: $e.too_big,
+//                 maximum: i.maxSize.value,
+//                 type: "set",
+//                 inclusive: !0,
+//                 exact: !1,
+//                 message: i.maxSize.message
+//             }),
+//                 t.dirty());
+//         const s = this._def.valueType;
+//         function o(c) {
+//             const u = new Set;
+//             for (const d of c) {
+//                 if (d.status === "aborted")
+//                     return Wt;
+//                 d.status === "dirty" && t.dirty(),
+//                     u.add(d.value)
+//             }
+//             return {
+//                 status: t.value,
+//                 value: u
+//             }
+//         }
+//         const a = [...n.data.values()].map((c, u) => s._parse(new mc(n, c, n.path, u)));
+//         return n.common.async ? Promise.all(a).then(c => o(c)) : o(a)
+//     }
+//     min(e, t) {
+//         return new Gf({
+//             ...this._def,
+//             minSize: {
+//                 value: e,
+//                 message: bt.toString(t)
+//             }
+//         })
+//     }
+//     max(e, t) {
+//         return new Gf({
+//             ...this._def,
+//             maxSize: {
+//                 value: e,
+//                 message: bt.toString(t)
+//             }
+//         })
+//     }
+//     size(e, t) {
+//         return this.min(e, t).max(e, t)
+//     }
+//     nonempty(e) {
+//         return this.min(1, e)
+//     }
+// }
+// Gf.create = (r, e) => new Gf({
+//     valueType: r,
+//     minSize: null,
+//     maxSize: null,
+//     typeName: Mt.ZodSet,
+//     ...Kt(e)
+// });
+// class xd extends er {
+//     constructor() {
+//         super(...arguments),
+//             this.validate = this.implement
+//     }
+//     _parse(e) {
+//         const { ctx: t } = this._processInputParams(e);
+//         if (t.parsedType !== Je.function)
+//             return tt(t, {
+//                 code: $e.invalid_type,
+//                 expected: Je.function,
+//                 received: t.parsedType
+//             }),
+//                 Wt;
+//         function n(a, c) {
+//             return Yy({
+//                 data: a,
+//                 path: t.path,
+//                 errorMaps: [t.common.contextualErrorMap, t.schemaErrorMap, Jy(), Gg].filter(u => !!u),
+//                 issueData: {
+//                     code: $e.invalid_arguments,
+//                     argumentsError: c
+//                 }
+//             })
+//         }
+//         function i(a, c) {
+//             return Yy({
+//                 data: a,
+//                 path: t.path,
+//                 errorMaps: [t.common.contextualErrorMap, t.schemaErrorMap, Jy(), Gg].filter(u => !!u),
+//                 issueData: {
+//                     code: $e.invalid_return_type,
+//                     returnTypeError: c
+//                 }
+//             })
+//         }
+//         const s = {
+//             errorMap: t.common.contextualErrorMap
+//         }
+//             , o = t.data;
+//         if (this._def.returns instanceof o0) {
+//             const a = this;
+//             return hs(async function (...c) {
+//                 const u = new da([])
+//                     , d = await a._def.args.parseAsync(c, s).catch(m => {
+//                         throw u.addIssue(n(c, m)),
+//                         u
+//                     }
+//                     )
+//                     , f = await Reflect.apply(o, this, d);
+//                 return await a._def.returns._def.type.parseAsync(f, s).catch(m => {
+//                     throw u.addIssue(i(f, m)),
+//                     u
+//                 }
+//                 )
+//             })
+//         } else {
+//             const a = this;
+//             return hs(function (...c) {
+//                 const u = a._def.args.safeParse(c, s);
+//                 if (!u.success)
+//                     throw new da([n(c, u.error)]);
+//                 const d = Reflect.apply(o, this, u.data)
+//                     , f = a._def.returns.safeParse(d, s);
+//                 if (!f.success)
+//                     throw new da([i(d, f.error)]);
+//                 return f.data
+//             })
+//         }
+//     }
+//     parameters() {
+//         return this._def.args
+//     }
+//     returnType() {
+//         return this._def.returns
+//     }
+//     args(...e) {
+//         return new xd({
+//             ...this._def,
+//             args: vc.create(e).rest(Ef.create())
+//         })
+//     }
+//     returns(e) {
+//         return new xd({
+//             ...this._def,
+//             returns: e
+//         })
+//     }
+//     implement(e) {
+//         return this.parse(e)
+//     }
+//     strictImplement(e) {
+//         return this.parse(e)
+//     }
+//     static create(e, t, n) {
+//         return new xd({
+//             args: e || vc.create([]).rest(Ef.create()),
+//             returns: t || Ef.create(),
+//             typeName: Mt.ZodFunction,
+//             ...Kt(n)
+//         })
+//     }
+// }
+// class t1 extends er {
+//     get schema() {
+//         return this._def.getter()
+//     }
+//     _parse(e) {
+//         const { ctx: t } = this._processInputParams(e);
+//         return this._def.getter()._parse({
+//             data: t.data,
+//             path: t.path,
+//             parent: t
+//         })
+//     }
+// }
+// t1.create = (r, e) => new t1({
+//     getter: r,
+//     typeName: Mt.ZodLazy,
+//     ...Kt(e)
+// });
+// class r1 extends er {
+//     _parse(e) {
+//         if (e.data !== this._def.value) {
+//             const t = this._getOrReturnCtx(e);
+//             return tt(t, {
+//                 received: t.data,
+//                 code: $e.invalid_literal,
+//                 expected: this._def.value
+//             }),
+//                 Wt
+//         }
+//         return {
+//             status: "valid",
+//             value: e.data
+//         }
+//     }
+//     get value() {
+//         return this._def.value
+//     }
+// }
+// r1.create = (r, e) => new r1({
+//     value: r,
+//     typeName: Mt.ZodLiteral,
+//     ...Kt(e)
+// });
+// function eP(r, e) {
+//     return new hu({
+//         values: r,
+//         typeName: Mt.ZodEnum,
+//         ...Kt(e)
+//     })
+// }
+// class hu extends er {
+//     _parse(e) {
+//         if (typeof e.data != "string") {
+//             const t = this._getOrReturnCtx(e)
+//                 , n = this._def.values;
+//             return tt(t, {
+//                 expected: Dr.joinValues(n),
+//                 received: t.parsedType,
+//                 code: $e.invalid_type
+//             }),
+//                 Wt
+//         }
+//         if (this._def.values.indexOf(e.data) === -1) {
+//             const t = this._getOrReturnCtx(e)
+//                 , n = this._def.values;
+//             return tt(t, {
+//                 received: t.data,
+//                 code: $e.invalid_enum_value,
+//                 options: n
+//             }),
+//                 Wt
+//         }
+//         return hs(e.data)
+//     }
+//     get options() {
+//         return this._def.values
+//     }
+//     get enum() {
+//         const e = {};
+//         for (const t of this._def.values)
+//             e[t] = t;
+//         return e
+//     }
+//     get Values() {
+//         const e = {};
+//         for (const t of this._def.values)
+//             e[t] = t;
+//         return e
+//     }
+//     get Enum() {
+//         const e = {};
+//         for (const t of this._def.values)
+//             e[t] = t;
+//         return e
+//     }
+//     extract(e) {
+//         return hu.create(e)
+//     }
+//     exclude(e) {
+//         return hu.create(this.options.filter(t => !e.includes(t)))
+//     }
+// }
+// hu.create = eP;
+// class n1 extends er {
+//     _parse(e) {
+//         const t = Dr.getValidEnumValues(this._def.values)
+//             , n = this._getOrReturnCtx(e);
+//         if (n.parsedType !== Je.string && n.parsedType !== Je.number) {
+//             const i = Dr.objectValues(t);
+//             return tt(n, {
+//                 expected: Dr.joinValues(i),
+//                 received: n.parsedType,
+//                 code: $e.invalid_type
+//             }),
+//                 Wt
+//         }
+//         if (t.indexOf(e.data) === -1) {
+//             const i = Dr.objectValues(t);
+//             return tt(n, {
+//                 received: n.data,
+//                 code: $e.invalid_enum_value,
+//                 options: i
+//             }),
+//                 Wt
+//         }
+//         return hs(e.data)
+//     }
+//     get enum() {
+//         return this._def.values
+//     }
+// }
+// n1.create = (r, e) => new n1({
+//     values: r,
+//     typeName: Mt.ZodNativeEnum,
+//     ...Kt(e)
+// });
+// class o0 extends er {
+//     unwrap() {
+//         return this._def.type
+//     }
+//     _parse(e) {
+//         const { ctx: t } = this._processInputParams(e);
+//         if (t.parsedType !== Je.promise && t.common.async === !1)
+//             return tt(t, {
+//                 code: $e.invalid_type,
+//                 expected: Je.promise,
+//                 received: t.parsedType
+//             }),
+//                 Wt;
+//         const n = t.parsedType === Je.promise ? t.data : Promise.resolve(t.data);
+//         return hs(n.then(i => this._def.type.parseAsync(i, {
+//             path: t.path,
+//             errorMap: t.common.contextualErrorMap
+//         })))
+//     }
+// }
+// o0.create = (r, e) => new o0({
+//     type: r,
+//     typeName: Mt.ZodPromise,
+//     ...Kt(e)
+// });
+// class Ea extends er {
+//     innerType() {
+//         return this._def.schema
+//     }
+//     sourceType() {
+//         return this._def.schema._def.typeName === Mt.ZodEffects ? this._def.schema.sourceType() : this._def.schema
+//     }
+//     _parse(e) {
+//         const { status: t, ctx: n } = this._processInputParams(e)
+//             , i = this._def.effect || null
+//             , s = {
+//                 addIssue: o => {
+//                     tt(n, o),
+//                         o.fatal ? t.abort() : t.dirty()
+//                 }
+//                 ,
+//                 get path() {
+//                     return n.path
+//                 }
+//             };
+//         if (s.addIssue = s.addIssue.bind(s),
+//             i.type === "preprocess") {
+//             const o = i.transform(n.data, s);
+//             return n.common.issues.length ? {
+//                 status: "dirty",
+//                 value: n.data
+//             } : n.common.async ? Promise.resolve(o).then(a => this._def.schema._parseAsync({
+//                 data: a,
+//                 path: n.path,
+//                 parent: n
+//             })) : this._def.schema._parseSync({
+//                 data: o,
+//                 path: n.path,
+//                 parent: n
+//             })
+//         }
+//         if (i.type === "refinement") {
+//             const o = a => {
+//                 const c = i.refinement(a, s);
+//                 if (n.common.async)
+//                     return Promise.resolve(c);
+//                 if (c instanceof Promise)
+//                     throw new Error("Async refinement encountered during synchronous parse operation. Use .parseAsync instead.");
+//                 return a
+//             }
+//                 ;
+//             if (n.common.async === !1) {
+//                 const a = this._def.schema._parseSync({
+//                     data: n.data,
+//                     path: n.path,
+//                     parent: n
+//                 });
+//                 return a.status === "aborted" ? Wt : (a.status === "dirty" && t.dirty(),
+//                     o(a.value),
+//                 {
+//                     status: t.value,
+//                     value: a.value
+//                 })
+//             } else
+//                 return this._def.schema._parseAsync({
+//                     data: n.data,
+//                     path: n.path,
+//                     parent: n
+//                 }).then(a => a.status === "aborted" ? Wt : (a.status === "dirty" && t.dirty(),
+//                     o(a.value).then(() => ({
+//                         status: t.value,
+//                         value: a.value
+//                     }))))
+//         }
+//         if (i.type === "transform")
+//             if (n.common.async === !1) {
+//                 const o = this._def.schema._parseSync({
+//                     data: n.data,
+//                     path: n.path,
+//                     parent: n
+//                 });
+//                 if (!Kg(o))
+//                     return o;
+//                 const a = i.transform(o.value, s);
+//                 if (a instanceof Promise)
+//                     throw new Error("Asynchronous transform encountered during synchronous parse operation. Use .parseAsync instead.");
+//                 return {
+//                     status: t.value,
+//                     value: a
+//                 }
+//             } else
+//                 return this._def.schema._parseAsync({
+//                     data: n.data,
+//                     path: n.path,
+//                     parent: n
+//                 }).then(o => Kg(o) ? Promise.resolve(i.transform(o.value, s)).then(a => ({
+//                     status: t.value,
+//                     value: a
+//                 })) : o);
+//         Dr.assertNever(i)
+//     }
+// }
+// Ea.create = (r, e, t) => new Ea({
+//     schema: r,
+//     typeName: Mt.ZodEffects,
+//     effect: e,
+//     ...Kt(t)
+// });
+// Ea.createWithPreprocess = (r, e, t) => new Ea({
+//     schema: e,
+//     effect: {
+//         type: "preprocess",
+//         transform: r
+//     },
+//     typeName: Mt.ZodEffects,
+//     ...Kt(t)
+// });
+// class il extends er {
+//     _parse(e) {
+//         return this._getType(e) === Je.undefined ? hs(void 0) : this._def.innerType._parse(e)
+//     }
+//     unwrap() {
+//         return this._def.innerType
+//     }
+// }
+// il.create = (r, e) => new il({
+//     innerType: r,
+//     typeName: Mt.ZodOptional,
+//     ...Kt(e)
+// });
+// class Kf extends er {
+//     _parse(e) {
+//         return this._getType(e) === Je.null ? hs(null) : this._def.innerType._parse(e)
+//     }
+//     unwrap() {
+//         return this._def.innerType
+//     }
+// }
+// Kf.create = (r, e) => new Kf({
+//     innerType: r,
+//     typeName: Mt.ZodNullable,
+//     ...Kt(e)
+// });
+// class i1 extends er {
+//     _parse(e) {
+//         const { ctx: t } = this._processInputParams(e);
+//         let n = t.data;
+//         return t.parsedType === Je.undefined && (n = this._def.defaultValue()),
+//             this._def.innerType._parse({
+//                 data: n,
+//                 path: t.path,
+//                 parent: t
+//             })
+//     }
+//     removeDefault() {
+//         return this._def.innerType
+//     }
+// }
+// i1.create = (r, e) => new i1({
+//     innerType: r,
+//     typeName: Mt.ZodDefault,
+//     defaultValue: typeof e.default == "function" ? e.default : () => e.default,
+//     ...Kt(e)
+// });
+// class rw extends er {
+//     _parse(e) {
+//         const { ctx: t } = this._processInputParams(e)
+//             , n = {
+//                 ...t,
+//                 common: {
+//                     ...t.common,
+//                     issues: []
+//                 }
+//             }
+//             , i = this._def.innerType._parse({
+//                 data: n.data,
+//                 path: n.path,
+//                 parent: {
+//                     ...n
+//                 }
+//             });
+//         return Qy(i) ? i.then(s => ({
+//             status: "valid",
+//             value: s.status === "valid" ? s.value : this._def.catchValue({
+//                 get error() {
+//                     return new da(n.common.issues)
+//                 },
+//                 input: n.data
+//             })
+//         })) : {
+//             status: "valid",
+//             value: i.status === "valid" ? i.value : this._def.catchValue({
+//                 get error() {
+//                     return new da(n.common.issues)
+//                 },
+//                 input: n.data
+//             })
+//         }
+//     }
+//     removeCatch() {
+//         return this._def.innerType
+//     }
+// }
+// rw.create = (r, e) => new rw({
+//     innerType: r,
+//     typeName: Mt.ZodCatch,
+//     catchValue: typeof e.catch == "function" ? e.catch : () => e.catch,
+//     ...Kt(e)
+// });
+// class nw extends er {
+//     _parse(e) {
+//         if (this._getType(e) !== Je.nan) {
+//             const n = this._getOrReturnCtx(e);
+//             return tt(n, {
+//                 code: $e.invalid_type,
+//                 expected: Je.nan,
+//                 received: n.parsedType
+//             }),
+//                 Wt
+//         }
+//         return {
+//             status: "valid",
+//             value: e.data
+//         }
+//     }
+// }
+// nw.create = r => new nw({
+//     typeName: Mt.ZodNaN,
+//     ...Kt(r)
+// });
+// const Iee = Symbol("zod_brand");
+// class tP extends er {
+//     _parse(e) {
+//         const { ctx: t } = this._processInputParams(e)
+//             , n = t.data;
+//         return this._def.type._parse({
+//             data: n,
+//             path: t.path,
+//             parent: t
+//         })
+//     }
+//     unwrap() {
+//         return this._def.type
+//     }
+// }
+// class k1 extends er {
+//     _parse(e) {
+//         const { status: t, ctx: n } = this._processInputParams(e);
+//         if (n.common.async)
+//             return (async () => {
+//                 const s = await this._def.in._parseAsync({
+//                     data: n.data,
+//                     path: n.path,
+//                     parent: n
+//                 });
+//                 return s.status === "aborted" ? Wt : s.status === "dirty" ? (t.dirty(),
+//                     XO(s.value)) : this._def.out._parseAsync({
+//                         data: s.value,
+//                         path: n.path,
+//                         parent: n
+//                     })
+//             }
+//             )();
+//         {
+//             const i = this._def.in._parseSync({
+//                 data: n.data,
+//                 path: n.path,
+//                 parent: n
+//             });
+//             return i.status === "aborted" ? Wt : i.status === "dirty" ? (t.dirty(),
+//             {
+//                 status: "dirty",
+//                 value: i.value
+//             }) : this._def.out._parseSync({
+//                 data: i.value,
+//                 path: n.path,
+//                 parent: n
+//             })
+//         }
+//     }
+//     static create(e, t) {
+//         return new k1({
+//             in: e,
+//             out: t,
+//             typeName: Mt.ZodPipeline
+//         })
+//     }
+// }
+// class iw extends er {
+//     _parse(e) {
+//         const t = this._def.innerType._parse(e);
+//         return Kg(t) && (t.value = Object.freeze(t.value)),
+//             t
+//     }
+// }
+// iw.create = (r, e) => new iw({
+//     innerType: r,
+//     typeName: Mt.ZodReadonly,
+//     ...Kt(e)
+// });
+// const rP = (r, e = {}, t) => r ? s0.create().superRefine((n, i) => {
+//     var s, o;
+//     if (!r(n)) {
+//         const a = typeof e == "function" ? e(n) : typeof e == "string" ? {
+//             message: e
+//         } : e
+//             , c = (o = (s = a.fatal) !== null && s !== void 0 ? s : t) !== null && o !== void 0 ? o : !0
+//             , u = typeof a == "string" ? {
+//                 message: a
+//             } : a;
+//         i.addIssue({
+//             code: "custom",
+//             ...u,
+//             fatal: c
+//         })
+//     }
+// }
+// ) : s0.create()
+//     , Tee = {
+//         object: yn.lazycreate
+//     };
+// var Mt;
+// (function (r) {
+//     r.ZodString = "ZodString",
+//         r.ZodNumber = "ZodNumber",
+//         r.ZodNaN = "ZodNaN",
+//         r.ZodBigInt = "ZodBigInt",
+//         r.ZodBoolean = "ZodBoolean",
+//         r.ZodDate = "ZodDate",
+//         r.ZodSymbol = "ZodSymbol",
+//         r.ZodUndefined = "ZodUndefined",
+//         r.ZodNull = "ZodNull",
+//         r.ZodAny = "ZodAny",
+//         r.ZodUnknown = "ZodUnknown",
+//         r.ZodNever = "ZodNever",
+//         r.ZodVoid = "ZodVoid",
+//         r.ZodArray = "ZodArray",
+//         r.ZodObject = "ZodObject",
+//         r.ZodUnion = "ZodUnion",
+//         r.ZodDiscriminatedUnion = "ZodDiscriminatedUnion",
+//         r.ZodIntersection = "ZodIntersection",
+//         r.ZodTuple = "ZodTuple",
+//         r.ZodRecord = "ZodRecord",
+//         r.ZodMap = "ZodMap",
+//         r.ZodSet = "ZodSet",
+//         r.ZodFunction = "ZodFunction",
+//         r.ZodLazy = "ZodLazy",
+//         r.ZodLiteral = "ZodLiteral",
+//         r.ZodEnum = "ZodEnum",
+//         r.ZodEffects = "ZodEffects",
+//         r.ZodNativeEnum = "ZodNativeEnum",
+//         r.ZodOptional = "ZodOptional",
+//         r.ZodNullable = "ZodNullable",
+//         r.ZodDefault = "ZodDefault",
+//         r.ZodCatch = "ZodCatch",
+//         r.ZodPromise = "ZodPromise",
+//         r.ZodBranded = "ZodBranded",
+//         r.ZodPipeline = "ZodPipeline",
+//         r.ZodReadonly = "ZodReadonly"
+// }
+// )(Mt || (Mt = {}));
+// const Ree = (r, e = {
+//     message: `Input not instance of ${r.name}`
+// }) => rP(t => t instanceof r, e)
+//     , nP = fa.create
+//     , iP = uu.create
+//     , Nee = nw.create
+//     , Oee = fu.create
+//     , sP = Zg.create
+//     , Pee = qf.create
+//     , kee = Xy.create
+//     , Mee = Jg.create
+//     , $ee = Yg.create
+//     , Dee = s0.create
+//     , Lee = Ef.create
+//     , Bee = fl.create
+//     , jee = ew.create
+//     , Uee = pa.create
+//     , Fee = yn.create
+//     , Wee = yn.strictCreate
+//     , Hee = Qg.create
+//     , zee = lb.create
+//     , Vee = Xg.create
+//     , qee = vc.create
+//     , Gee = e1.create
+//     , Kee = tw.create
+//     , Zee = Gf.create
+//     , Jee = xd.create
+//     , Yee = t1.create
+//     , Qee = r1.create
+//     , Xee = hu.create
+//     , ete = n1.create
+//     , tte = o0.create
+//     , WC = Ea.create
+//     , rte = il.create
+//     , nte = Kf.create
+//     , ite = Ea.createWithPreprocess
+//     , ste = k1.create
+//     , ote = () => nP().optional()
+//     , ate = () => iP().optional()
+//     , cte = () => sP().optional()
+//     , lte = {
+//         string: r => fa.create({
+//             ...r,
+//             coerce: !0
+//         }),
+//         number: r => uu.create({
+//             ...r,
+//             coerce: !0
+//         }),
+//         boolean: r => Zg.create({
+//             ...r,
+//             coerce: !0
+//         }),
+//         bigint: r => fu.create({
+//             ...r,
+//             coerce: !0
+//         }),
+//         date: r => qf.create({
+//             ...r,
+//             coerce: !0
+//         })
+//     }
+//     , ute = Wt;
+// var we = Object.freeze({
+//     __proto__: null,
+//     defaultErrorMap: Gg,
+//     setErrorMap: pee,
+//     getErrorMap: Jy,
+//     makeIssue: Yy,
+//     EMPTY_PATH: gee,
+//     addIssueToContext: tt,
+//     ParseStatus: Ki,
+//     INVALID: Wt,
+//     DIRTY: XO,
+//     OK: hs,
+//     isAborted: yE,
+//     isDirty: wE,
+//     isValid: Kg,
+//     isAsync: Qy,
+//     get util() {
+//         return Dr
+//     },
+//     get objectUtil() {
+//         return vE
+//     },
+//     ZodParsedType: Je,
+//     getParsedType: Gl,
+//     ZodType: er,
+//     ZodString: fa,
+//     ZodNumber: uu,
+//     ZodBigInt: fu,
+//     ZodBoolean: Zg,
+//     ZodDate: qf,
+//     ZodSymbol: Xy,
+//     ZodUndefined: Jg,
+//     ZodNull: Yg,
+//     ZodAny: s0,
+//     ZodUnknown: Ef,
+//     ZodNever: fl,
+//     ZodVoid: ew,
+//     ZodArray: pa,
+//     ZodObject: yn,
+//     ZodUnion: Qg,
+//     ZodDiscriminatedUnion: lb,
+//     ZodIntersection: Xg,
+//     ZodTuple: vc,
+//     ZodRecord: e1,
+//     ZodMap: tw,
+//     ZodSet: Gf,
+//     ZodFunction: xd,
+//     ZodLazy: t1,
+//     ZodLiteral: r1,
+//     ZodEnum: hu,
+//     ZodNativeEnum: n1,
+//     ZodPromise: o0,
+//     ZodEffects: Ea,
+//     ZodTransformer: Ea,
+//     ZodOptional: il,
+//     ZodNullable: Kf,
+//     ZodDefault: i1,
+//     ZodCatch: rw,
+//     ZodNaN: nw,
+//     BRAND: Iee,
+//     ZodBranded: tP,
+//     ZodPipeline: k1,
+//     ZodReadonly: iw,
+//     custom: rP,
+//     Schema: er,
+//     ZodSchema: er,
+//     late: Tee,
+//     get ZodFirstPartyTypeKind() {
+//         return Mt
+//     },
+//     coerce: lte,
+//     any: Dee,
+//     array: Uee,
+//     bigint: Oee,
+//     boolean: sP,
+//     date: Pee,
+//     discriminatedUnion: zee,
+//     effect: WC,
+//     enum: Xee,
+//     function: Jee,
+//     instanceof: Ree,
+//     intersection: Vee,
+//     lazy: Yee,
+//     literal: Qee,
+//     map: Kee,
+//     nan: Nee,
+//     nativeEnum: ete,
+//     never: Bee,
+//     null: $ee,
+//     nullable: nte,
+//     number: iP,
+//     object: Fee,
+//     oboolean: cte,
+//     onumber: ate,
+//     optional: rte,
+//     ostring: ote,
+//     pipeline: ste,
+//     preprocess: ite,
+//     promise: tte,
+//     record: Gee,
+//     set: Zee,
+//     strictObject: Wee,
+//     string: nP,
+//     symbol: kee,
+//     transformer: WC,
+//     tuple: qee,
+//     undefined: Mee,
+//     union: Hee,
+//     unknown: Lee,
+//     void: jee,
+//     NEVER: ute,
+//     ZodIssueCode: $e,
+//     quotelessJson: dee,
+//     ZodError: da
+// });
+// const Vs = we.object({
+//     message: we.string()
+// });
+// function Qt(r) {
+//     return we.literal(Ed[r])
+// }
+// we.object({
+//     accessList: we.array(we.string()),
+//     blockHash: we.string().nullable(),
+//     blockNumber: we.string().nullable(),
+//     chainId: we.string(),
+//     from: we.string(),
+//     gas: we.string(),
+//     hash: we.string(),
+//     input: we.string().nullable(),
+//     maxFeePerGas: we.string(),
+//     maxPriorityFeePerGas: we.string(),
+//     nonce: we.string(),
+//     r: we.string(),
+//     s: we.string(),
+//     to: we.string(),
+//     transactionIndex: we.string().nullable(),
+//     type: we.string(),
+//     v: we.string(),
+//     value: we.string()
+// });
+// const fte = we.object({
+//     chainId: we.number()
+// })
+//     , hte = we.object({
+//         email: we.string().email()
+//     })
+//     , dte = we.object({
+//         otp: we.string()
+//     })
+//     , pte = we.object({
+//         chainId: we.optional(we.number())
+//     })
+//     , gte = we.object({
+//         email: we.string().email()
+//     })
+//     , mte = we.object({
+//         themeMode: we.optional(we.enum(["light", "dark"])),
+//         themeVariables: we.optional(we.record(we.string(), we.string().or(we.number())))
+//     })
+//     , vte = we.object({
+//         metadata: we.object({
+//             name: we.string(),
+//             description: we.string(),
+//             url: we.string(),
+//             icons: we.array(we.string())
+//         }).optional(),
+//         sdkVersion: we.string(),
+//         projectId: we.string()
+//     })
+//     , yte = we.object({
+//         action: we.enum(["VERIFY_DEVICE", "VERIFY_OTP"])
+//     })
+//     , wte = we.object({
+//         email: we.string().email(),
+//         address: we.string(),
+//         chainId: we.number()
+//     })
+//     , bte = we.object({
+//         isConnected: we.boolean()
+//     })
+//     , _te = we.object({
+//         chainId: we.number()
+//     })
+//     , Ete = we.object({
+//         chainId: we.number()
+//     })
+//     , xte = we.object({
+//         email: we.string().email()
+//     })
+//     , Ste = we.any()
+//     , Ate = we.object({
+//         method: we.literal("personal_sign"),
+//         params: we.array(we.any())
+//     })
+//     , Cte = we.object({
+//         method: we.literal("eth_sendTransaction"),
+//         params: we.array(we.any())
+//     })
+//     , Ite = we.object({
+//         method: we.literal("eth_accounts")
+//     })
+//     , Tte = we.object({
+//         method: we.literal("eth_getBalance"),
+//         params: we.array(we.any())
+//     })
+//     , Rte = we.object({
+//         method: we.literal("eth_estimateGas"),
+//         params: we.array(we.any())
+//     })
+//     , Nte = we.object({
+//         method: we.literal("eth_gasPrice")
+//     })
+//     , Ote = we.object({
+//         method: we.literal("eth_signTypedData_v4"),
+//         params: we.array(we.any())
+//     })
+//     , Pte = we.object({
+//         method: we.literal("eth_getTransactionByHash"),
+//         params: we.array(we.any())
+//     })
+//     , kte = we.object({
+//         method: we.literal("eth_blockNumber")
+//     })
+//     , Mte = we.object({
+//         method: we.literal("eth_chainId")
+//     })
+//     , HC = we.object({
+//         token: we.string()
+//     });
+// we.object({
+//     type: Qt("APP_SWITCH_NETWORK"),
+//     payload: fte
+// }).or(we.object({
+//     type: Qt("APP_CONNECT_EMAIL"),
+//     payload: hte
+// })).or(we.object({
+//     type: Qt("APP_CONNECT_DEVICE")
+// })).or(we.object({
+//     type: Qt("APP_CONNECT_OTP"),
+//     payload: dte
+// })).or(we.object({
+//     type: Qt("APP_GET_USER"),
+//     payload: we.optional(pte)
+// })).or(we.object({
+//     type: Qt("APP_SIGN_OUT")
+// })).or(we.object({
+//     type: Qt("APP_IS_CONNECTED"),
+//     payload: we.optional(HC)
+// })).or(we.object({
+//     type: Qt("APP_GET_CHAIN_ID")
+// })).or(we.object({
+//     type: Qt("APP_RPC_REQUEST"),
+//     payload: Ate.or(Cte).or(Ite).or(Tte).or(Rte).or(Nte).or(Ote).or(kte).or(Mte).or(Pte)
+// })).or(we.object({
+//     type: Qt("APP_UPDATE_EMAIL"),
+//     payload: gte
+// })).or(we.object({
+//     type: Qt("APP_AWAIT_UPDATE_EMAIL")
+// })).or(we.object({
+//     type: Qt("APP_SYNC_THEME"),
+//     payload: mte
+// })).or(we.object({
+//     type: Qt("APP_SYNC_DAPP_DATA"),
+//     payload: vte
+// })),
+//     we.object({
+//         type: Qt("FRAME_SWITCH_NETWORK_ERROR"),
+//         payload: Vs
+//     }).or(we.object({
+//         type: Qt("FRAME_SWITCH_NETWORK_SUCCESS"),
+//         payload: Ete
+//     })).or(we.object({
+//         type: Qt("FRAME_CONNECT_EMAIL_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_CONNECT_EMAIL_SUCCESS"),
+//         payload: yte
+//     })).or(we.object({
+//         type: Qt("FRAME_CONNECT_OTP_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_CONNECT_OTP_SUCCESS")
+//     })).or(we.object({
+//         type: Qt("FRAME_CONNECT_DEVICE_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_CONNECT_DEVICE_SUCCESS")
+//     })).or(we.object({
+//         type: Qt("FRAME_GET_USER_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_GET_USER_SUCCESS"),
+//         payload: wte
+//     })).or(we.object({
+//         type: Qt("FRAME_SIGN_OUT_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_SIGN_OUT_SUCCESS")
+//     })).or(we.object({
+//         type: Qt("FRAME_IS_CONNECTED_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_IS_CONNECTED_SUCCESS"),
+//         payload: bte
+//     })).or(we.object({
+//         type: Qt("FRAME_GET_CHAIN_ID_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_GET_CHAIN_ID_SUCCESS"),
+//         payload: _te
+//     })).or(we.object({
+//         type: Qt("FRAME_RPC_REQUEST_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_RPC_REQUEST_SUCCESS"),
+//         payload: Ste
+//     })).or(we.object({
+//         type: Qt("FRAME_SESSION_UPDATE"),
+//         payload: HC
+//     })).or(we.object({
+//         type: Qt("FRAME_UPDATE_EMAIL_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_UPDATE_EMAIL_SUCCESS")
+//     })).or(we.object({
+//         type: Qt("FRAME_AWAIT_UPDATE_EMAIL_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_AWAIT_UPDATE_EMAIL_SUCCESS"),
+//         payload: xte
+//     })).or(we.object({
+//         type: Qt("FRAME_SYNC_THEME_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_SYNC_THEME_SUCCESS")
+//     })).or(we.object({
+//         type: Qt("FRAME_SYNC_DAPP_DATA_ERROR"),
+//         payload: Vs
+//     })).or(we.object({
+//         type: Qt("FRAME_SYNC_DAPP_DATA_SUCCESS")
+//     }));
+// const zC = {
+//     set(r, e) {
+//         localStorage.setItem(`${Ed.STORAGE_KEY}${r}`, e)
+//     },
+//     get(r) {
+//         return localStorage.getItem(`${Ed.STORAGE_KEY}${r}`)
+//     },
+//     delete(r) {
+//         localStorage.removeItem(`${Ed.STORAGE_KEY}${r}`)
+//     }
+// }
+//     , $te = ["ASIA/SHANGHAI", "ASIA/URUMQI", "ASIA/CHONGQING", "ASIA/HARBIN", "ASIA/KASHGAR", "ASIA/MACAU", "ASIA/HONG_KONG", "ASIA/MACAO", "ASIA/BEIJING", "ASIA/HARBIN"]
+//     , Iv = 30 * 1e3
+//     , T3 = {
+//         getBlockchainApiUrl() {
+//             try {
+//                 const { timeZone: r } = new Intl.DateTimeFormat().resolvedOptions()
+//                     , e = r.toUpperCase();
+//                 return $te.includes(e) ? "https://rpc.walletconnect.org" : "https://rpc.walletconnect.com"
+//             } catch {
+//                 return !1
+//             }
+//         },
+//         checkIfAllowedToTriggerEmail() {
+//             const r = zC.get(Ed.LAST_EMAIL_LOGIN_TIME);
+//             if (r) {
+//                 const e = Date.now() - Number(r);
+//                 if (e < Iv) {
+//                     const t = Math.ceil((Iv - e) / 1e3);
+//                     throw new Error(`Please try again after ${t} seconds`)
+//                 }
+//             }
+//         },
+//         getTimeToNextEmailLogin() {
+//             const r = zC.get(Ed.LAST_EMAIL_LOGIN_TIME);
+//             if (r) {
+//                 const e = Date.now() - Number(r);
+//                 if (e < Iv)
+//                     return Math.ceil((Iv - e) / 1e3)
+//             }
+//             return 0
+//         }
+//     };
+// var ub = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// const Dte = 6;
+// let a0 = class extends Xt {
+//     constructor() {
+//         var e;
+//         super(...arguments),
+//             this.email = (e = at.state.data) == null ? void 0 : e.email,
+//             this.emailConnector = Xr.getEmailConnector(),
+//             this.loading = !1,
+//             this.timeoutTimeLeft = T3.getTimeToNextEmailLogin(),
+//             this.error = "",
+//             this.otp = ""
+//     }
+//     firstUpdated() {
+//         this.startOTPTimeout()
+//     }
+//     disconnectedCallback() {
+//         clearTimeout(this.OTPTimeout)
+//     }
+//     render() {
+//         if (!this.email)
+//             throw new Error("w3m-email-verify-otp-view: No email provided");
+//         const e = !!this.timeoutTimeLeft;
+//         return Ee`
+//       <wui-flex
+//         flexDirection="column"
+//         alignItems="center"
+//         .padding=${["l", "0", "l", "0"]}
+//         gap="l"
+//       >
+//         <wui-flex flexDirection="column" alignItems="center">
+//           <wui-text variant="paragraph-400" color="fg-100"> Enter the code we sent to </wui-text>
+//           <wui-text variant="paragraph-500" color="fg-100">${this.email}</wui-text>
+//         </wui-flex>
 
-  wui-loading-hexagon {
-    position: absolute;
-  }
+//         <wui-text variant="small-400" color="fg-200">The code expires in 20 minutes</wui-text>
 
-  wui-icon-box {
-    position: absolute;
-    right: 4px;
-    bottom: 0;
-    opacity: 0;
-    transform: scale(0.5);
-    z-index: 1;
-    transition: all var(--wui-ease-out-power-2) var(--wui-duration-lg);
-  }
+//         ${this.loading ? Ee`<wui-loading-spinner size="xl" color="accent-100"></wui-loading-spinner>` : Ee` <wui-flex flexDirection="column" alignItems="center" gap="xs">
+//               <wui-otp
+//                 dissabled
+//                 length="6"
+//                 @inputChange=${this.onOtpInputChange.bind(this)}
+//                 .otp=${this.otp}
+//               ></wui-otp>
+//               ${this.error ? Ee`<wui-text variant="small-400" color="error-100"
+//                     >${this.error}. Try Again</wui-text
+//                   >` : null}
+//             </wui-flex>`}
 
-  wui-button {
-    display: none;
-  }
+//         <wui-flex alignItems="center">
+//           <wui-text variant="small-400" color="fg-200">Didn't receive it?</wui-text>
+//           <wui-link @click=${this.onResendCode.bind(this)} .disabled=${e}>
+//             Resend ${e ? `in ${this.timeoutTimeLeft}s` : "Code"}
+//           </wui-link>
+//         </wui-flex>
+//       </wui-flex>
+//     `
+//     }
+//     startOTPTimeout() {
+//         this.timeoutTimeLeft = T3.getTimeToNextEmailLogin(),
+//             this.OTPTimeout = setInterval(() => {
+//                 this.timeoutTimeLeft > 0 ? this.timeoutTimeLeft = T3.getTimeToNextEmailLogin() : clearInterval(this.OTPTimeout)
+//             }
+//                 , 1e3)
+//     }
+//     async onOtpInputChange(e) {
+//         try {
+//             this.loading || (this.otp = e.detail,
+//                 this.emailConnector && this.otp.length === Dte && (this.loading = !0,
+//                     await this.emailConnector.provider.connectOtp({
+//                         otp: this.otp
+//                     }),
+//                     Ft.sendEvent({
+//                         type: "track",
+//                         event: "EMAIL_VERIFICATION_CODE_PASS"
+//                     }),
+//                     await wr.connectExternal(this.emailConnector),
+//                     en.close(),
+//                     Ft.sendEvent({
+//                         type: "track",
+//                         event: "CONNECT_SUCCESS",
+//                         properties: {
+//                             method: "email"
+//                         }
+//                     })))
+//         } catch (t) {
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "EMAIL_VERIFICATION_CODE_FAIL"
+//             }),
+//                 this.error = vt.parseError(t),
+//                 this.loading = !1
+//         }
+//     }
+//     async onResendCode() {
+//         try {
+//             if (!this.loading && !this.timeoutTimeLeft) {
+//                 this.error = "",
+//                     this.otp = "";
+//                 const e = Xr.getEmailConnector();
+//                 if (!e || !this.email)
+//                     throw new Error("w3m-email-login-widget: Unable to resend email");
+//                 this.loading = !0,
+//                     await e.provider.connectEmail({
+//                         email: this.email
+//                     }),
+//                     Ft.sendEvent({
+//                         type: "track",
+//                         event: "EMAIL_VERIFICATION_CODE_SENT"
+//                     }),
+//                     this.startOTPTimeout(),
+//                     Rn.showSuccess("Code email resent")
+//             }
+//         } catch (e) {
+//             Rn.showError(e)
+//         } finally {
+//             this.loading = !1
+//         }
+//     }
+// }
+//     ;
+// a0.styles = hee;
+// ub([it()], a0.prototype, "loading", void 0);
+// ub([it()], a0.prototype, "timeoutTimeLeft", void 0);
+// ub([it()], a0.prototype, "error", void 0);
+// a0 = ub([Pe("w3m-email-verify-otp-view")], a0);
+// const Lte = fn`
+//   wui-icon-box {
+//     height: var(--wui-icon-box-size-xl);
+//     width: var(--wui-icon-box-size-xl);
+//   }
+// `;
+// var oP = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let sw = class extends Xt {
+//     constructor() {
+//         var e;
+//         super(),
+//             this.email = (e = at.state.data) == null ? void 0 : e.email,
+//             this.emailConnector = Xr.getEmailConnector(),
+//             this.loading = !1,
+//             this.listenForDeviceApproval()
+//     }
+//     render() {
+//         if (!this.email)
+//             throw new Error("w3m-email-verify-device-view: No email provided");
+//         if (!this.emailConnector)
+//             throw new Error("w3m-email-verify-device-view: No email connector provided");
+//         return Ee`
+//       <wui-flex
+//         flexDirection="column"
+//         alignItems="center"
+//         .padding=${["xxl", "s", "xxl", "s"]}
+//         gap="l"
+//       >
+//         <wui-icon-box
+//           size="xl"
+//           iconcolor="accent-100"
+//           backgroundcolor="accent-100"
+//           icon="verify"
+//           background="opaque"
+//         ></wui-icon-box>
 
-  [data-error='true'] wui-icon-box {
-    opacity: 1;
-    transform: scale(1);
-  }
+//         <wui-flex flexDirection="column" alignItems="center" gap="s">
+//           <wui-flex flexDirection="column" alignItems="center">
+//             <wui-text variant="paragraph-400" color="fg-100">
+//               Approve the login link we sent to
+//             </wui-text>
+//             <wui-text variant="paragraph-400" color="fg-100"><b>${this.email}</b></wui-text>
+//           </wui-flex>
 
-  [data-error='true'] > wui-flex:first-child {
-    animation: shake 250ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-  }
+//           <wui-text variant="small-400" color="fg-200" align="center">
+//             The code expires in 20 minutes
+//           </wui-text>
 
-  wui-button[data-retry='true'] {
-    display: block;
-    opacity: 1;
-  }
-`;
-var d6 = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let qg = class extends Xt {
-    constructor() {
-        var e;
-        super(),
-            this.network = (e = at.state.data) == null ? void 0 : e.network,
-            this.unsubscribe = [],
-            this.showRetry = !1,
-            this.error = !1
-    }
-    disconnectedCallback() {
-        this.unsubscribe.forEach(e => e())
-    }
-    firstUpdated() {
-        this.onSwitchNetwork()
-    }
-    render() {
-        if (!this.network)
-            throw new Error("w3m-network-switch-view: No network provided");
-        this.onShowRetry();
-        const e = this.error ? "Switch declined" : "Approve in wallet"
-            , t = this.error ? "Switch can be declined if chain is not supported by a wallet or previous request is still active" : "Accept connection request in your wallet";
-        return Ee`
-      <wui-flex
-        data-error=${this.error}
-        flexDirection="column"
-        alignItems="center"
-        .padding=${["3xl", "xl", "3xl", "xl"]}
-        gap="xl"
-      >
-        <wui-flex justifyContent="center" alignItems="center">
-          <wui-network-image
-            size="lg"
-            imageSrc=${kr(Cn.getNetworkImage(this.network))}
-          ></wui-network-image>
+//           <wui-flex alignItems="center" id="w3m-resend-section">
+//             <wui-text variant="small-400" color="fg-100" align="center">
+//               Didn't receive it?
+//             </wui-text>
+//             <wui-link @click=${this.onResendCode.bind(this)} .disabled=${this.loading}>
+//               Resend email
+//             </wui-link>
+//           </wui-flex>
+//         </wui-flex>
+//       </wui-flex>
+//     `
+//     }
+//     async listenForDeviceApproval() {
+//         this.emailConnector && (await this.emailConnector.provider.connectDevice(),
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "DEVICE_REGISTERED_FOR_EMAIL"
+//             }),
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "EMAIL_VERIFICATION_CODE_SENT"
+//             }),
+//             at.replace("EmailVerifyOtp", {
+//                 email: this.email
+//             }))
+//     }
+//     async onResendCode() {
+//         try {
+//             if (!this.loading) {
+//                 if (!this.emailConnector || !this.email)
+//                     throw new Error("w3m-email-login-widget: Unable to resend email");
+//                 this.loading = !0,
+//                     await this.emailConnector.provider.connectEmail({
+//                         email: this.email
+//                     }),
+//                     Rn.showSuccess("Code email resent")
+//             }
+//         } catch (e) {
+//             Rn.showError(e)
+//         } finally {
+//             this.loading = !1
+//         }
+//     }
+// }
+//     ;
+// sw.styles = Lte;
+// oP([it()], sw.prototype, "loading", void 0);
+// sw = oP([Pe("w3m-email-verify-device-view")], sw);
+// const Bte = fn`
+//   div {
+//     width: 100%;
+//     height: 400px;
+//   }
 
-          ${this.error ? null : Ee`<wui-loading-hexagon></wui-loading-hexagon>`}
+//   [data-ready='false'] {
+//     transform: scale(1.05);
+//   }
 
-          <wui-icon-box
-            backgroundColor="error-100"
-            background="opaque"
-            iconColor="error-100"
-            icon="close"
-            size="sm"
-            ?border=${!0}
-            borderColor="wui-color-bg-125"
-          ></wui-icon-box>
-        </wui-flex>
+//   @media (max-width: 430px) {
+//     [data-ready='false'] {
+//       transform: translateY(-50px);
+//     }
+//   }
+// `;
+// var aP = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let ow = class extends Xt {
+//     constructor() {
+//         super(),
+//             this.bodyObserver = void 0,
+//             this.unsubscribe = [],
+//             this.iframe = document.getElementById("w3m-iframe"),
+//             this.ready = !1,
+//             this.unsubscribe.push(en.subscribeKey("open", e => {
+//                 e || this.onHideIframe()
+//             }
+//             ))
+//     }
+//     disconnectedCallback() {
+//         var e;
+//         this.unsubscribe.forEach(t => t()),
+//             (e = this.bodyObserver) == null || e.unobserve(window.document.body)
+//     }
+//     firstUpdated() {
+//         this.iframe.style.display = "block";
+//         const t = this.renderRoot.querySelector("div");
+//         this.bodyObserver = new ResizeObserver(() => {
+//             const i = (t == null ? void 0 : t.getBoundingClientRect()) ?? {
+//                 left: 0,
+//                 top: 0,
+//                 width: 0,
+//                 height: 0
+//             };
+//             this.iframe.style.width = `${i.width}px`,
+//                 this.iframe.style.height = `${i.height - 10}px`,
+//                 this.iframe.style.left = `${i.left}px`,
+//                 this.iframe.style.top = `${i.top + 10 / 2}px`,
+//                 this.ready = !0
+//         }
+//         ),
+//             this.bodyObserver.observe(window.document.body)
+//     }
+//     render() {
+//         return this.ready && this.onShowIframe(),
+//             Ee`<div data-ready=${this.ready}></div>`
+//     }
+//     onShowIframe() {
+//         const e = window.innerWidth <= 430;
+//         this.iframe.animate([{
+//             opacity: 0,
+//             transform: e ? "translateY(50px)" : "scale(.95)"
+//         }, {
+//             opacity: 1,
+//             transform: e ? "translateY(0)" : "scale(1)"
+//         }], {
+//             duration: 200,
+//             easing: "ease",
+//             fill: "forwards",
+//             delay: 300
+//         })
+//     }
+//     async onHideIframe() {
+//         await this.iframe.animate([{
+//             opacity: 1
+//         }, {
+//             opacity: 0
+//         }], {
+//             duration: 200,
+//             easing: "ease",
+//             fill: "forwards"
+//         }).finished,
+//             this.iframe.style.display = "none"
+//     }
+// }
+//     ;
+// ow.styles = Bte;
+// aP([it()], ow.prototype, "ready", void 0);
+// ow = aP([Pe("w3m-approve-transaction-view")], ow);
+// var jte = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let VC = class extends Xt {
+//     render() {
+//         return Ee`
+//       <wui-flex flexDirection="column" alignItems="center" gap="xl" padding="xl">
+//         <wui-text variant="paragraph-400" color="fg-100">Follow the instructions on</wui-text>
+//         <wui-chip
+//           icon="externalLink"
+//           variant="fill"
+//           href=${tl.SECURE_SITE_DASHBOARD}
+//           imageSrc=${tl.SECURE_SITE_FAVICON}
+//         >
+//         </wui-chip>
+//         <wui-text variant="small-400" color="fg-200">
+//           You will have to reconnect for security reasons
+//         </wui-text>
+//       </wui-flex>
+//     `
+//     }
+// }
+//     ;
+// VC = jte([Pe("w3m-upgrade-wallet-view")], VC);
+// /**
+//  * @license
+//  * Copyright 2020 Google LLC
+//  * SPDX-License-Identifier: BSD-3-Clause
+//  */
+// const Ute = r => r.strings === void 0;
+// /**
+//  * @license
+//  * Copyright 2017 Google LLC
+//  * SPDX-License-Identifier: BSD-3-Clause
+//  */
+// const Fte = {
+//     ATTRIBUTE: 1,
+//     CHILD: 2,
+//     PROPERTY: 3,
+//     BOOLEAN_ATTRIBUTE: 4,
+//     EVENT: 5,
+//     ELEMENT: 6
+// }
+//     , Wte = r => (...e) => ({
+//         _$litDirective$: r,
+//         values: e
+//     });
+// let Hte = class {
+//     constructor(e) { }
+//     get _$AU() {
+//         return this._$AM._$AU
+//     }
+//     _$AT(e, t, n) {
+//         this._$Ct = e,
+//             this._$AM = t,
+//             this._$Ci = n
+//     }
+//     _$AS(e, t) {
+//         return this.update(e, t)
+//     }
+//     update(e, t) {
+//         return this.render(...t)
+//     }
+// }
+//     ;
+// /**
+//  * @license
+//  * Copyright 2017 Google LLC
+//  * SPDX-License-Identifier: BSD-3-Clause
+//  */
+// const dg = (r, e) => {
+//     var n;
+//     const t = r._$AN;
+//     if (t === void 0)
+//         return !1;
+//     for (const i of t)
+//         (n = i._$AO) == null || n.call(i, e, !1),
+//             dg(i, e);
+//     return !0
+// }
+//     , aw = r => {
+//         let e, t;
+//         do {
+//             if ((e = r._$AM) === void 0)
+//                 break;
+//             t = e._$AN,
+//                 t.delete(r),
+//                 r = e
+//         } while ((t == null ? void 0 : t.size) === 0)
+//     }
+//     , cP = r => {
+//         for (let e; e = r._$AM; r = e) {
+//             let t = e._$AN;
+//             if (t === void 0)
+//                 e._$AN = t = new Set;
+//             else if (t.has(r))
+//                 break;
+//             t.add(r),
+//                 qte(e)
+//         }
+//     }
+//     ;
+// function zte(r) {
+//     this._$AN !== void 0 ? (aw(this),
+//         this._$AM = r,
+//         cP(this)) : this._$AM = r
+// }
+// function Vte(r, e = !1, t = 0) {
+//     const n = this._$AH
+//         , i = this._$AN;
+//     if (i !== void 0 && i.size !== 0)
+//         if (e)
+//             if (Array.isArray(n))
+//                 for (let s = t; s < n.length; s++)
+//                     dg(n[s], !1),
+//                         aw(n[s]);
+//             else
+//                 n != null && (dg(n, !1),
+//                     aw(n));
+//         else
+//             dg(this, r)
+// }
+// const qte = r => {
+//     r.type == Fte.CHILD && (r._$AP ?? (r._$AP = Vte),
+//         r._$AQ ?? (r._$AQ = zte))
+// }
+//     ;
+// let Gte = class extends Hte {
+//     constructor() {
+//         super(...arguments),
+//             this._$AN = void 0
+//     }
+//     _$AT(e, t, n) {
+//         super._$AT(e, t, n),
+//             cP(this),
+//             this.isConnected = e._$AU
+//     }
+//     _$AO(e, t = !0) {
+//         var n, i;
+//         e !== this.isConnected && (this.isConnected = e,
+//             e ? (n = this.reconnected) == null || n.call(this) : (i = this.disconnected) == null || i.call(this)),
+//             t && (dg(this, e),
+//                 aw(this))
+//     }
+//     setValue(e) {
+//         if (Ute(this._$Ct))
+//             this._$Ct._$AI(e, this);
+//         else {
+//             const t = [...this._$Ct._$AH];
+//             t[this._$Ci] = e,
+//                 this._$Ct._$AI(t, this, 0)
+//         }
+//     }
+//     disconnected() { }
+//     reconnected() { }
+// }
+//     ;
+// /**
+//  * @license
+//  * Copyright 2020 Google LLC
+//  * SPDX-License-Identifier: BSD-3-Clause
+//  */
+// const lP = () => new Kte;
+// let Kte = class {
+// }
+//     ;
+// const R3 = new WeakMap
+//     , uP = Wte(class extends Gte {
+//         render(r) {
+//             return Fn
+//         }
+//         update(r, [e]) {
+//             var n;
+//             const t = e !== this.Y;
+//             return t && this.Y !== void 0 && this.rt(void 0),
+//                 (t || this.lt !== this.ct) && (this.Y = e,
+//                     this.ht = (n = r.options) == null ? void 0 : n.host,
+//                     this.rt(this.ct = r.element)),
+//                 Fn
+//         }
+//         rt(r) {
+//             if (typeof this.Y == "function") {
+//                 const e = this.ht ?? globalThis;
+//                 let t = R3.get(e);
+//                 t === void 0 && (t = new WeakMap,
+//                     R3.set(e, t)),
+//                     t.get(this.Y) !== void 0 && this.Y.call(this.ht, void 0),
+//                     t.set(this.Y, r),
+//                     r !== void 0 && this.Y.call(this.ht, r)
+//             } else
+//                 this.Y.value = r
+//         }
+//         get lt() {
+//             var r, e;
+//             return typeof this.Y == "function" ? (r = R3.get(this.ht ?? globalThis)) == null ? void 0 : r.get(this.Y) : (e = this.Y) == null ? void 0 : e.value
+//         }
+//         disconnected() {
+//             this.lt === this.ct && this.rt(void 0)
+//         }
+//         reconnected() {
+//             this.rt(this.ct)
+//         }
+//     }
+//     )
+//     , Zte = fn`
+//   wui-email-input {
+//     width: 100%;
+//   }
 
-        <wui-flex flexDirection="column" alignItems="center" gap="xs">
-          <wui-text align="center" variant="paragraph-500" color="fg-100">${e}</wui-text>
-          <wui-text align="center" variant="small-500" color="fg-200">${t}</wui-text>
-        </wui-flex>
+//   form {
+//     width: 100%;
+//     display: block;
+//     position: relative;
+//   }
+// `;
+// var p6 = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let s1 = class extends Xt {
+//     constructor() {
+//         var e;
+//         super(...arguments),
+//             this.formRef = lP(),
+//             this.initialValue = ((e = at.state.data) == null ? void 0 : e.email) ?? "",
+//             this.email = "",
+//             this.loading = !1
+//     }
+//     firstUpdated() {
+//         var e;
+//         (e = this.formRef.value) == null || e.addEventListener("keydown", t => {
+//             t.key === "Enter" && this.onSubmitEmail(t)
+//         }
+//         )
+//     }
+//     render() {
+//         const e = !this.loading && this.email.length > 3 && this.email !== this.initialValue;
+//         return Ee`
+//       <wui-flex flexDirection="column" padding="m" gap="m">
+//         <form ${uP(this.formRef)} @submit=${this.onSubmitEmail.bind(this)}>
+//           <wui-email-input
+//             value=${this.initialValue}
+//             .disabled=${this.loading}
+//             @inputChange=${this.onEmailInputChange.bind(this)}
+//           >
+//           </wui-email-input>
+//           <input type="submit" hidden />
+//         </form>
 
-        <wui-button
-          data-retry=${this.showRetry}
-          variant="fill"
-          .disabled=${!this.error}
-          @click=${this.onSwitchNetwork.bind(this)}
-        >
-          <wui-icon color="inherit" slot="iconLeft" name="refresh"></wui-icon>
-          Try again
-        </wui-button>
-      </wui-flex>
-    `
-    }
-    onShowRetry() {
-        var e;
-        if (this.error && !this.showRetry) {
-            this.showRetry = !0;
-            const t = (e = this.shadowRoot) == null ? void 0 : e.querySelector("wui-button");
-            t == null || t.animate([{
-                opacity: 0
-            }, {
-                opacity: 1
-            }], {
-                fill: "forwards",
-                easing: "ease"
-            })
-        }
-    }
-    async onSwitchNetwork() {
-        try {
-            this.error = !1,
-                this.network && (await Tn.switchActiveNetwork(this.network),
-                    jn.state.isSiweEnabled || qN.navigateAfterNetworkSwitch())
-        } catch {
-            this.error = !0
-        }
-    }
-}
-    ;
-qg.styles = iee;
-d6([it()], qg.prototype, "showRetry", void 0);
-d6([it()], qg.prototype, "error", void 0);
-qg = d6([Pe("w3m-network-switch-view")], qg);
-const see = fn`
-  :host > wui-grid {
-    max-height: 360px;
-    overflow: auto;
-  }
+//         <wui-flex gap="s">
+//           <wui-button size="md" variant="shade" fullWidth @click=${at.goBack}>
+//             Cancel
+//           </wui-button>
 
-  wui-grid::-webkit-scrollbar {
-    display: none;
-  }
-`;
-var YO = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let Zy = class extends Xt {
-    constructor() {
-        super(),
-            this.unsubscribe = [],
-            this.caipNetwork = Tn.state.caipNetwork,
-            this.unsubscribe.push(Tn.subscribeKey("caipNetwork", e => this.caipNetwork = e))
-    }
-    disconnectedCallback() {
-        this.unsubscribe.forEach(e => e())
-    }
-    render() {
-        return Ee`
-      <wui-grid padding="s" gridTemplateColumns="repeat(4, 1fr)" rowGap="l" columnGap="xs">
-        ${this.networksTemplate()}
-      </wui-grid>
+//           <wui-button
+//             size="md"
+//             variant="fill"
+//             fullWidth
+//             @click=${this.onSubmitEmail.bind(this)}
+//             .disabled=${!e}
+//             .loading=${this.loading}
+//           >
+//             Save
+//           </wui-button>
+//         </wui-flex>
+//       </wui-flex>
+//     `
+//     }
+//     onEmailInputChange(e) {
+//         this.email = e.detail
+//     }
+//     async onSubmitEmail(e) {
+//         try {
+//             if (this.loading)
+//                 return;
+//             this.loading = !0,
+//                 e.preventDefault();
+//             const t = Xr.getEmailConnector();
+//             if (!t)
+//                 throw new Error("w3m-update-email-wallet: Email connector not found");
+//             await t.provider.updateEmail({
+//                 email: this.email
+//             }),
+//                 Ft.sendEvent({
+//                     type: "track",
+//                     event: "EMAIL_EDIT"
+//                 }),
+//                 at.replace("UpdateEmailWalletWaiting", {
+//                     email: this.email
+//                 })
+//         } catch (t) {
+//             Rn.showError(t),
+//                 this.loading = !1
+//         }
+//     }
+// }
+//     ;
+// s1.styles = Zte;
+// p6([it()], s1.prototype, "email", void 0);
+// p6([it()], s1.prototype, "loading", void 0);
+// s1 = p6([Pe("w3m-update-email-wallet-view")], s1);
+// const Jte = fn`
+//   wui-icon-box {
+//     height: var(--wui-icon-box-size-xl);
+//     width: var(--wui-icon-box-size-xl);
+//   }
+// `;
+// var fP = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let cw = class extends Xt {
+//     constructor() {
+//         var e;
+//         super(),
+//             this.email = (e = at.state.data) == null ? void 0 : e.email,
+//             this.emailConnector = Xr.getEmailConnector(),
+//             this.loading = !1,
+//             this.listenForEmailUpdateApproval()
+//     }
+//     render() {
+//         if (!this.email)
+//             throw new Error("w3m-update-email-wallet-waiting-view: No email provided");
+//         if (!this.emailConnector)
+//             throw new Error("w3m-update-email-wallet-waiting-view: No email connector provided");
+//         return Ee`
+//       <wui-flex
+//         flexDirection="column"
+//         alignItems="center"
+//         .padding=${["xxl", "s", "xxl", "s"]}
+//         gap="l"
+//       >
+//         <wui-icon-box
+//           size="xl"
+//           iconcolor="accent-100"
+//           backgroundcolor="accent-100"
+//           icon="mail"
+//           background="opaque"
+//         ></wui-icon-box>
 
-      <wui-separator></wui-separator>
+//         <wui-flex flexDirection="column" alignItems="center" gap="s">
+//           <wui-flex flexDirection="column" alignItems="center">
+//             <wui-text variant="paragraph-400" color="fg-100">
+//               Approve verification link we sent to
+//             </wui-text>
+//             <wui-text variant="paragraph-400" color="fg-100">${this.email}</wui-text>
+//           </wui-flex>
 
-      <wui-flex padding="s" flexDirection="column" gap="m" alignItems="center">
-        <wui-text variant="small-400" color="fg-300" align="center">
-          Your connected wallet may not support some of the networks available for this dApp
-        </wui-text>
-        <wui-link @click=${this.onNetworkHelp.bind(this)}>
-          <wui-icon size="xs" color="accent-100" slot="iconLeft" name="helpCircle"></wui-icon>
-          What is a network
-        </wui-link>
-      </wui-flex>
-    `
-    }
-    onNetworkHelp() {
-        Ft.sendEvent({
-            type: "track",
-            event: "CLICK_NETWORK_HELP"
-        }),
-            at.push("WhatIsANetwork")
-    }
-    networksTemplate() {
-        const { approvedCaipNetworkIds: e, requestedCaipNetworks: t, supportsAllNetworks: n } = Tn.state
-            , i = e
-            , s = t
-            , o = {};
-        return s && i && (i.forEach((a, c) => {
-            o[a] = c
-        }
-        ),
-            s.sort((a, c) => {
-                const u = o[a.id]
-                    , d = o[c.id];
-                return u !== void 0 && d !== void 0 ? u - d : u !== void 0 ? -1 : d !== void 0 ? 1 : 0
-            }
-            )),
-            s == null ? void 0 : s.map(a => {
-                var c;
-                return Ee`
-        <wui-card-select
-          .selected=${((c = this.caipNetwork) == null ? void 0 : c.id) === a.id}
-          imageSrc=${kr(Cn.getNetworkImage(a))}
-          type="network"
-          name=${a.name ?? a.id}
-          @click=${() => this.onSwitchNetwork(a)}
-          .disabled=${!n && !(i != null && i.includes(a.id))}
-          data-testid=${`w3m-network-switch-${a.name ?? a.id}`}
-        ></wui-card-select>
-      `
-            }
-            )
-    }
-    async onSwitchNetwork(e) {
-        const { isConnected: t } = Pr.state
-            , { approvedCaipNetworkIds: n, supportsAllNetworks: i, caipNetwork: s } = Tn.state
-            , { data: o } = at.state;
-        t && (s == null ? void 0 : s.id) !== e.id ? n != null && n.includes(e.id) ? (await Tn.switchActiveNetwork(e),
-            qN.navigateAfterNetworkSwitch()) : i && at.push("SwitchNetwork", {
-                ...o,
-                network: e
-            }) : t || (Tn.setCaipNetwork(e),
-                at.push("Connect"))
-    }
-}
-    ;
-Zy.styles = see;
-YO([it()], Zy.prototype, "caipNetwork", void 0);
-Zy = YO([Pe("w3m-networks-view")], Zy);
-const oee = fn`
-  :host > wui-flex:first-child {
-    height: 500px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: none;
-  }
-`;
-var uh = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-const Cv = "last-transaction"
-    , aee = 7;
-let ul = class extends Xt {
-    constructor() {
-        super(),
-            this.unsubscribe = [],
-            this.paginationObserver = void 0,
-            this.address = Pr.state.address,
-            this.transactions = ra.state.transactions,
-            this.transactionsByYear = ra.state.transactionsByYear,
-            this.loading = ra.state.loading,
-            this.empty = ra.state.empty,
-            this.next = ra.state.next,
-            this.unsubscribe.push(Pr.subscribe(e => {
-                e.isConnected && this.address !== e.address && (this.address = e.address,
-                    ra.resetTransactions(),
-                    ra.fetchTransactions(e.address))
-            }
-            ), ra.subscribe(e => {
-                this.transactions = e.transactions,
-                    this.transactionsByYear = e.transactionsByYear,
-                    this.loading = e.loading,
-                    this.empty = e.empty,
-                    this.next = e.next
-            }
-            ))
-    }
-    firstUpdated() {
-        this.transactions.length === 0 && ra.fetchTransactions(this.address),
-            this.createPaginationObserver()
-    }
-    updated() {
-        this.setPaginationObserver()
-    }
-    disconnectedCallback() {
-        this.unsubscribe.forEach(e => e())
-    }
-    render() {
-        return Ee`
-      <wui-flex flexDirection="column" padding="s" gap="s">
-        ${this.empty ? null : this.templateTransactionsByYear()}
-        ${this.loading ? this.templateLoading() : null}
-        ${!this.loading && this.empty ? this.templateEmpty() : null}
-      </wui-flex>
-    `
-    }
-    templateTransactionsByYear() {
-        const e = Object.keys(this.transactionsByYear).sort().reverse();
-        return e.map((t, n) => {
-            const i = n === e.length - 1
-                , s = parseInt(t, 10)
-                , o = mf.getTransactionGroupTitle(s)
-                , a = this.transactionsByYear[s];
-            return a ? Ee`
-        <wui-flex flexDirection="column" gap="s">
-          <wui-flex
-            alignItems="center"
-            flexDirection="row"
-            .padding=${["xs", "s", "s", "s"]}
-          >
-            <wui-text variant="paragraph-500" color="fg-200">${o}</wui-text>
-          </wui-flex>
-          <wui-flex flexDirection="column" gap="xs">
-            ${this.templateTransactions(a, i)}
-          </wui-flex>
-        </wui-flex>
-      ` : null
-        }
-        )
-    }
-    templateRenderTransaction(e, t) {
-        const { date: n, descriptions: i, direction: s, isAllNFT: o, images: a, status: c, transfers: u, type: d } = this.getTransactionListItemProps(e)
-            , f = (u == null ? void 0 : u.length) > 1;
-        return (u == null ? void 0 : u.length) === 2 && !o ? Ee`
-        <wui-transaction-list-item
-          date=${n}
-          .direction=${s}
-          id=${t && this.next ? Cv : ""}
-          status=${c}
-          type=${d}
-          .images=${a}
-          .descriptions=${i}
-        ></wui-transaction-list-item>
-      ` : f ? u.map((m, y) => {
-            const x = mf.getTransferDescription(m)
-                , R = t && y === u.length - 1;
-            return Ee` <wui-transaction-list-item
-          date=${n}
-          direction=${m.direction}
-          id=${R && this.next ? Cv : ""}
-          status=${c}
-          type=${d}
-          .onlyDirectionIcon=${!0}
-          .images=${[a == null ? void 0 : a[y]]}
-          .descriptions=${[x]}
-        ></wui-transaction-list-item>`
-        }
-        ) : Ee`
-      <wui-transaction-list-item
-        date=${n}
-        .direction=${s}
-        id=${t && this.next ? Cv : ""}
-        status=${c}
-        type=${d}
-        .images=${a}
-        .descriptions=${i}
-      ></wui-transaction-list-item>
-    `
-    }
-    templateTransactions(e, t) {
-        return e.map((n, i) => {
-            const s = t && i === e.length - 1;
-            return Ee`${this.templateRenderTransaction(n, s)}`
-        }
-        )
-    }
-    templateEmpty() {
-        return Ee`
-      <wui-flex
-        flexGrow="1"
-        flexDirection="column"
-        justifyContent="center"
-        alignItems="center"
-        .padding=${["3xl", "xl", "3xl", "xl"]}
-        gap="xl"
-      >
-        <wui-icon-box
-          backgroundColor="glass-005"
-          background="gray"
-          iconColor="fg-200"
-          icon="wallet"
-          size="lg"
-          ?border=${!0}
-          borderColor="wui-color-bg-125"
-        ></wui-icon-box>
-        <wui-flex flexDirection="column" alignItems="center" gap="xs">
-          <wui-text align="center" variant="paragraph-500" color="fg-100"
-            >No Transactions yet</wui-text
-          >
-          <wui-text align="center" variant="small-500" color="fg-200"
-            >Start trading on dApps <br />
-            to grow your wallet!</wui-text
-          >
-        </wui-flex>
-      </wui-flex>
-    `
-    }
-    templateLoading() {
-        return Array(aee).fill(Ee` <wui-transaction-list-item-loader></wui-transaction-list-item-loader> `).map(e => e)
-    }
-    createPaginationObserver() {
-        const { projectId: e } = Ur.state;
-        this.paginationObserver = new IntersectionObserver(([t]) => {
-            t != null && t.isIntersecting && !this.loading && (ra.fetchTransactions(this.address),
-                Ft.sendEvent({
-                    type: "track",
-                    event: "LOAD_MORE_TRANSACTIONS",
-                    properties: {
-                        address: this.address,
-                        projectId: e,
-                        cursor: this.next
-                    }
-                }))
-        }
-            , {}),
-            this.setPaginationObserver()
-    }
-    setPaginationObserver() {
-        var t, n, i;
-        (t = this.paginationObserver) == null || t.disconnect();
-        const e = (n = this.shadowRoot) == null ? void 0 : n.querySelector(`#${Cv}`);
-        e && ((i = this.paginationObserver) == null || i.observe(e))
-    }
-    getTransactionListItemProps(e) {
-        var c, u, d, f, p;
-        const t = BO.getRelativeDateFromNow((c = e == null ? void 0 : e.metadata) == null ? void 0 : c.minedAt)
-            , n = mf.getTransactionDescriptions(e)
-            , i = e == null ? void 0 : e.transfers
-            , s = (u = e == null ? void 0 : e.transfers) == null ? void 0 : u[0]
-            , o = !!s && ((d = e == null ? void 0 : e.transfers) == null ? void 0 : d.every(m => !!m.nft_info))
-            , a = mf.getTransactionImages(i);
-        return {
-            date: t,
-            direction: s == null ? void 0 : s.direction,
-            descriptions: n,
-            isAllNFT: o,
-            images: a,
-            status: (f = e.metadata) == null ? void 0 : f.status,
-            transfers: i,
-            type: (p = e.metadata) == null ? void 0 : p.operationType
-        }
-    }
-}
-    ;
-ul.styles = oee;
-uh([it()], ul.prototype, "address", void 0);
-uh([it()], ul.prototype, "transactions", void 0);
-uh([it()], ul.prototype, "transactionsByYear", void 0);
-uh([it()], ul.prototype, "loading", void 0);
-uh([it()], ul.prototype, "empty", void 0);
-uh([it()], ul.prototype, "next", void 0);
-ul = uh([Pe("w3m-transactions-view")], ul);
-var cee = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-const lee = [{
-    images: ["network", "layers", "system"],
-    title: "The system’s nuts and bolts",
-    text: "A network is what brings the blockchain to life, as this technical infrastructure allows apps to access the ledger and smart contract services."
-}, {
-    images: ["noun", "defiAlt", "dao"],
-    title: "Designed for different uses",
-    text: "Each network is designed differently, and may therefore suit certain apps and experiences."
-}];
-let jC = class extends Xt {
-    render() {
-        return Ee`
-      <wui-flex
-        flexDirection="column"
-        .padding=${["xxl", "xl", "xl", "xl"]}
-        alignItems="center"
-        gap="xl"
-      >
-        <w3m-help-widget .data=${lee}></w3m-help-widget>
-        <wui-button
-          variant="fill"
-          size="sm"
-          @click=${() => {
-                vt.openHref("https://ethereum.org/en/developers/docs/networks/", "_blank")
-            }
-            }
-        >
-          Learn more
-          <wui-icon color="inherit" slot="iconRight" name="externalLink"></wui-icon>
-        </wui-button>
-      </wui-flex>
-    `
-    }
-}
-    ;
-jC = cee([Pe("w3m-what-is-a-network-view")], jC);
-var uee = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-const fee = [{
-    images: ["login", "profile", "lock"],
-    title: "One login for all of web3",
-    text: "Log in to any app by connecting your wallet. Say goodbye to countless passwords!"
-}, {
-    images: ["defi", "nft", "eth"],
-    title: "A home for your digital assets",
-    text: "A wallet lets you store, send and receive digital assets like cryptocurrencies and NFTs."
-}, {
-    images: ["browser", "noun", "dao"],
-    title: "Your gateway to a new web",
-    text: "With your wallet, you can explore and interact with DeFi, NFTs, DAOs, and much more."
-}];
-let UC = class extends Xt {
-    render() {
-        return Ee`
-      <wui-flex
-        flexDirection="column"
-        .padding=${["xxl", "xl", "xl", "xl"]}
-        alignItems="center"
-        gap="xl"
-      >
-        <w3m-help-widget .data=${fee}></w3m-help-widget>
-        <wui-button variant="fill" size="sm" @click=${this.onGetWallet.bind(this)}>
-          <wui-icon color="inherit" slot="iconLeft" name="wallet"></wui-icon>
-          Get a wallet
-        </wui-button>
-      </wui-flex>
-    `
-    }
-    onGetWallet() {
-        Ft.sendEvent({
-            type: "track",
-            event: "CLICK_GET_WALLET"
-        }),
-            at.push("GetWallet")
-    }
-}
-    ;
-UC = uee([Pe("w3m-what-is-a-wallet-view")], UC);
-const hee = fn`
-  wui-loading-spinner {
-    margin: 9px auto;
-  }
-`
-    , Ed = {
-        SECURE_SITE_SDK: "https://secure.web3modal.com/sdk",
-        APP_EVENT_KEY: "@w3m-app/",
-        FRAME_EVENT_KEY: "@w3m-frame/",
-        RPC_METHOD_KEY: "RPC_",
-        STORAGE_KEY: "@w3m-storage/",
-        SESSION_TOKEN_KEY: "SESSION_TOKEN_KEY",
-        EMAIL_LOGIN_USED_KEY: "EMAIL_LOGIN_USED_KEY",
-        LAST_USED_CHAIN_KEY: "LAST_USED_CHAIN_KEY",
-        LAST_EMAIL_LOGIN_TIME: "LAST_EMAIL_LOGIN_TIME",
-        EMAIL: "EMAIL",
-        APP_SWITCH_NETWORK: "@w3m-app/SWITCH_NETWORK",
-        APP_CONNECT_EMAIL: "@w3m-app/CONNECT_EMAIL",
-        APP_CONNECT_DEVICE: "@w3m-app/CONNECT_DEVICE",
-        APP_CONNECT_OTP: "@w3m-app/CONNECT_OTP",
-        APP_GET_USER: "@w3m-app/GET_USER",
-        APP_SIGN_OUT: "@w3m-app/SIGN_OUT",
-        APP_IS_CONNECTED: "@w3m-app/IS_CONNECTED",
-        APP_GET_CHAIN_ID: "@w3m-app/GET_CHAIN_ID",
-        APP_RPC_REQUEST: "@w3m-app/RPC_REQUEST",
-        APP_UPDATE_EMAIL: "@w3m-app/UPDATE_EMAIL",
-        APP_AWAIT_UPDATE_EMAIL: "@w3m-app/AWAIT_UPDATE_EMAIL",
-        APP_SYNC_THEME: "@w3m-app/SYNC_THEME",
-        APP_SYNC_DAPP_DATA: "@w3m-app/SYNC_DAPP_DATA",
-        FRAME_SWITCH_NETWORK_ERROR: "@w3m-frame/SWITCH_NETWORK_ERROR",
-        FRAME_SWITCH_NETWORK_SUCCESS: "@w3m-frame/SWITCH_NETWORK_SUCCESS",
-        FRAME_CONNECT_EMAIL_ERROR: "@w3m-frame/CONNECT_EMAIL_ERROR",
-        FRAME_CONNECT_EMAIL_SUCCESS: "@w3m-frame/CONNECT_EMAIL_SUCCESS",
-        FRAME_CONNECT_DEVICE_ERROR: "@w3m-frame/CONNECT_DEVICE_ERROR",
-        FRAME_CONNECT_DEVICE_SUCCESS: "@w3m-frame/CONNECT_DEVICE_SUCCESS",
-        FRAME_CONNECT_OTP_SUCCESS: "@w3m-frame/CONNECT_OTP_SUCCESS",
-        FRAME_CONNECT_OTP_ERROR: "@w3m-frame/CONNECT_OTP_ERROR",
-        FRAME_GET_USER_SUCCESS: "@w3m-frame/GET_USER_SUCCESS",
-        FRAME_GET_USER_ERROR: "@w3m-frame/GET_USER_ERROR",
-        FRAME_SIGN_OUT_SUCCESS: "@w3m-frame/SIGN_OUT_SUCCESS",
-        FRAME_SIGN_OUT_ERROR: "@w3m-frame/SIGN_OUT_ERROR",
-        FRAME_IS_CONNECTED_SUCCESS: "@w3m-frame/IS_CONNECTED_SUCCESS",
-        FRAME_IS_CONNECTED_ERROR: "@w3m-frame/IS_CONNECTED_ERROR",
-        FRAME_GET_CHAIN_ID_SUCCESS: "@w3m-frame/GET_CHAIN_ID_SUCCESS",
-        FRAME_GET_CHAIN_ID_ERROR: "@w3m-frame/GET_CHAIN_ID_ERROR",
-        FRAME_RPC_REQUEST_SUCCESS: "@w3m-frame/RPC_REQUEST_SUCCESS",
-        FRAME_RPC_REQUEST_ERROR: "@w3m-frame/RPC_REQUEST_ERROR",
-        FRAME_SESSION_UPDATE: "@w3m-frame/SESSION_UPDATE",
-        FRAME_UPDATE_EMAIL_SUCCESS: "@w3m-frame/UPDATE_EMAIL_SUCCESS",
-        FRAME_UPDATE_EMAIL_ERROR: "@w3m-frame/UPDATE_EMAIL_ERROR",
-        FRAME_AWAIT_UPDATE_EMAIL_SUCCESS: "@w3m-frame/AWAIT_UPDATE_EMAIL_SUCCESS",
-        FRAME_AWAIT_UPDATE_EMAIL_ERROR: "@w3m-frame/AWAIT_UPDATE_EMAIL_ERROR",
-        FRAME_SYNC_THEME_SUCCESS: "@w3m-frame/SYNC_THEME_SUCCESS",
-        FRAME_SYNC_THEME_ERROR: "@w3m-frame/SYNC_THEME_ERROR",
-        FRAME_SYNC_DAPP_DATA_SUCCESS: "@w3m-frame/SYNC_DAPP_DATA_SUCCESS",
-        FRAME_SYNC_DAPP_DATA_ERROR: "@w3m-frame/SYNC_DAPP_DATA_ERROR"
-    };
-var Dr;
-(function (r) {
-    r.assertEqual = i => i;
-    function e(i) { }
-    r.assertIs = e;
-    function t(i) {
-        throw new Error
-    }
-    r.assertNever = t,
-        r.arrayToEnum = i => {
-            const s = {};
-            for (const o of i)
-                s[o] = o;
-            return s
-        }
-        ,
-        r.getValidEnumValues = i => {
-            const s = r.objectKeys(i).filter(a => typeof i[i[a]] != "number")
-                , o = {};
-            for (const a of s)
-                o[a] = i[a];
-            return r.objectValues(o)
-        }
-        ,
-        r.objectValues = i => r.objectKeys(i).map(function (s) {
-            return i[s]
-        }),
-        r.objectKeys = typeof Object.keys == "function" ? i => Object.keys(i) : i => {
-            const s = [];
-            for (const o in i)
-                Object.prototype.hasOwnProperty.call(i, o) && s.push(o);
-            return s
-        }
-        ,
-        r.find = (i, s) => {
-            for (const o of i)
-                if (s(o))
-                    return o
-        }
-        ,
-        r.isInteger = typeof Number.isInteger == "function" ? i => Number.isInteger(i) : i => typeof i == "number" && isFinite(i) && Math.floor(i) === i;
-    function n(i, s = " | ") {
-        return i.map(o => typeof o == "string" ? `'${o}'` : o).join(s)
-    }
-    r.joinValues = n,
-        r.jsonStringifyReplacer = (i, s) => typeof s == "bigint" ? s.toString() : s
-}
-)(Dr || (Dr = {}));
-var vE;
-(function (r) {
-    r.mergeShapes = (e, t) => ({
-        ...e,
-        ...t
-    })
-}
-)(vE || (vE = {}));
-const Je = Dr.arrayToEnum(["string", "nan", "number", "integer", "float", "boolean", "date", "bigint", "symbol", "function", "undefined", "null", "array", "object", "unknown", "promise", "void", "never", "map", "set"])
-    , Gl = r => {
-        switch (typeof r) {
-            case "undefined":
-                return Je.undefined;
-            case "string":
-                return Je.string;
-            case "number":
-                return isNaN(r) ? Je.nan : Je.number;
-            case "boolean":
-                return Je.boolean;
-            case "function":
-                return Je.function;
-            case "bigint":
-                return Je.bigint;
-            case "symbol":
-                return Je.symbol;
-            case "object":
-                return Array.isArray(r) ? Je.array : r === null ? Je.null : r.then && typeof r.then == "function" && r.catch && typeof r.catch == "function" ? Je.promise : typeof Map < "u" && r instanceof Map ? Je.map : typeof Set < "u" && r instanceof Set ? Je.set : typeof Date < "u" && r instanceof Date ? Je.date : Je.object;
-            default:
-                return Je.unknown
-        }
-    }
-    , $e = Dr.arrayToEnum(["invalid_type", "invalid_literal", "custom", "invalid_union", "invalid_union_discriminator", "invalid_enum_value", "unrecognized_keys", "invalid_arguments", "invalid_return_type", "invalid_date", "invalid_string", "too_small", "too_big", "invalid_intersection_types", "not_multiple_of", "not_finite"])
-    , dee = r => JSON.stringify(r, null, 2).replace(/"([^"]+)":/g, "$1:");
-class da extends Error {
-    constructor(e) {
-        super(),
-            this.issues = [],
-            this.addIssue = n => {
-                this.issues = [...this.issues, n]
-            }
-            ,
-            this.addIssues = (n = []) => {
-                this.issues = [...this.issues, ...n]
-            }
-            ;
-        const t = new.target.prototype;
-        Object.setPrototypeOf ? Object.setPrototypeOf(this, t) : this.__proto__ = t,
-            this.name = "ZodError",
-            this.issues = e
-    }
-    get errors() {
-        return this.issues
-    }
-    format(e) {
-        const t = e || function (s) {
-            return s.message
-        }
-            , n = {
-                _errors: []
-            }
-            , i = s => {
-                for (const o of s.issues)
-                    if (o.code === "invalid_union")
-                        o.unionErrors.map(i);
-                    else if (o.code === "invalid_return_type")
-                        i(o.returnTypeError);
-                    else if (o.code === "invalid_arguments")
-                        i(o.argumentsError);
-                    else if (o.path.length === 0)
-                        n._errors.push(t(o));
-                    else {
-                        let a = n
-                            , c = 0;
-                        for (; c < o.path.length;) {
-                            const u = o.path[c];
-                            c === o.path.length - 1 ? (a[u] = a[u] || {
-                                _errors: []
-                            },
-                                a[u]._errors.push(t(o))) : a[u] = a[u] || {
-                                    _errors: []
-                                },
-                                a = a[u],
-                                c++
-                        }
-                    }
-            }
-            ;
-        return i(this),
-            n
-    }
-    toString() {
-        return this.message
-    }
-    get message() {
-        return JSON.stringify(this.issues, Dr.jsonStringifyReplacer, 2)
-    }
-    get isEmpty() {
-        return this.issues.length === 0
-    }
-    flatten(e = t => t.message) {
-        const t = {}
-            , n = [];
-        for (const i of this.issues)
-            i.path.length > 0 ? (t[i.path[0]] = t[i.path[0]] || [],
-                t[i.path[0]].push(e(i))) : n.push(e(i));
-        return {
-            formErrors: n,
-            fieldErrors: t
-        }
-    }
-    get formErrors() {
-        return this.flatten()
-    }
-}
-da.create = r => new da(r);
-const Gg = (r, e) => {
-    let t;
-    switch (r.code) {
-        case $e.invalid_type:
-            r.received === Je.undefined ? t = "Required" : t = `Expected ${r.expected}, received ${r.received}`;
-            break;
-        case $e.invalid_literal:
-            t = `Invalid literal value, expected ${JSON.stringify(r.expected, Dr.jsonStringifyReplacer)}`;
-            break;
-        case $e.unrecognized_keys:
-            t = `Unrecognized key(s) in object: ${Dr.joinValues(r.keys, ", ")}`;
-            break;
-        case $e.invalid_union:
-            t = "Invalid input";
-            break;
-        case $e.invalid_union_discriminator:
-            t = `Invalid discriminator value. Expected ${Dr.joinValues(r.options)}`;
-            break;
-        case $e.invalid_enum_value:
-            t = `Invalid enum value. Expected ${Dr.joinValues(r.options)}, received '${r.received}'`;
-            break;
-        case $e.invalid_arguments:
-            t = "Invalid function arguments";
-            break;
-        case $e.invalid_return_type:
-            t = "Invalid function return type";
-            break;
-        case $e.invalid_date:
-            t = "Invalid date";
-            break;
-        case $e.invalid_string:
-            typeof r.validation == "object" ? "includes" in r.validation ? (t = `Invalid input: must include "${r.validation.includes}"`,
-                typeof r.validation.position == "number" && (t = `${t} at one or more positions greater than or equal to ${r.validation.position}`)) : "startsWith" in r.validation ? t = `Invalid input: must start with "${r.validation.startsWith}"` : "endsWith" in r.validation ? t = `Invalid input: must end with "${r.validation.endsWith}"` : Dr.assertNever(r.validation) : r.validation !== "regex" ? t = `Invalid ${r.validation}` : t = "Invalid";
-            break;
-        case $e.too_small:
-            r.type === "array" ? t = `Array must contain ${r.exact ? "exactly" : r.inclusive ? "at least" : "more than"} ${r.minimum} element(s)` : r.type === "string" ? t = `String must contain ${r.exact ? "exactly" : r.inclusive ? "at least" : "over"} ${r.minimum} character(s)` : r.type === "number" ? t = `Number must be ${r.exact ? "exactly equal to " : r.inclusive ? "greater than or equal to " : "greater than "}${r.minimum}` : r.type === "date" ? t = `Date must be ${r.exact ? "exactly equal to " : r.inclusive ? "greater than or equal to " : "greater than "}${new Date(Number(r.minimum))}` : t = "Invalid input";
-            break;
-        case $e.too_big:
-            r.type === "array" ? t = `Array must contain ${r.exact ? "exactly" : r.inclusive ? "at most" : "less than"} ${r.maximum} element(s)` : r.type === "string" ? t = `String must contain ${r.exact ? "exactly" : r.inclusive ? "at most" : "under"} ${r.maximum} character(s)` : r.type === "number" ? t = `Number must be ${r.exact ? "exactly" : r.inclusive ? "less than or equal to" : "less than"} ${r.maximum}` : r.type === "bigint" ? t = `BigInt must be ${r.exact ? "exactly" : r.inclusive ? "less than or equal to" : "less than"} ${r.maximum}` : r.type === "date" ? t = `Date must be ${r.exact ? "exactly" : r.inclusive ? "smaller than or equal to" : "smaller than"} ${new Date(Number(r.maximum))}` : t = "Invalid input";
-            break;
-        case $e.custom:
-            t = "Invalid input";
-            break;
-        case $e.invalid_intersection_types:
-            t = "Intersection results could not be merged";
-            break;
-        case $e.not_multiple_of:
-            t = `Number must be a multiple of ${r.multipleOf}`;
-            break;
-        case $e.not_finite:
-            t = "Number must be finite";
-            break;
-        default:
-            t = e.defaultError,
-                Dr.assertNever(r)
-    }
-    return {
-        message: t
-    }
-}
-    ;
-let QO = Gg;
-function pee(r) {
-    QO = r
-}
-function Jy() {
-    return QO
-}
-const Yy = r => {
-    const { data: e, path: t, errorMaps: n, issueData: i } = r
-        , s = [...t, ...i.path || []]
-        , o = {
-            ...i,
-            path: s
-        };
-    let a = "";
-    const c = n.filter(u => !!u).slice().reverse();
-    for (const u of c)
-        a = u(o, {
-            data: e,
-            defaultError: a
-        }).message;
-    return {
-        ...i,
-        path: s,
-        message: i.message || a
-    }
-}
-    , gee = [];
-function tt(r, e) {
-    const t = Yy({
-        issueData: e,
-        data: r.data,
-        path: r.path,
-        errorMaps: [r.common.contextualErrorMap, r.schemaErrorMap, Jy(), Gg].filter(n => !!n)
-    });
-    r.common.issues.push(t)
-}
-class Ki {
-    constructor() {
-        this.value = "valid"
-    }
-    dirty() {
-        this.value === "valid" && (this.value = "dirty")
-    }
-    abort() {
-        this.value !== "aborted" && (this.value = "aborted")
-    }
-    static mergeArray(e, t) {
-        const n = [];
-        for (const i of t) {
-            if (i.status === "aborted")
-                return Wt;
-            i.status === "dirty" && e.dirty(),
-                n.push(i.value)
-        }
-        return {
-            status: e.value,
-            value: n
-        }
-    }
-    static async mergeObjectAsync(e, t) {
-        const n = [];
-        for (const i of t)
-            n.push({
-                key: await i.key,
-                value: await i.value
-            });
-        return Ki.mergeObjectSync(e, n)
-    }
-    static mergeObjectSync(e, t) {
-        const n = {};
-        for (const i of t) {
-            const { key: s, value: o } = i;
-            if (s.status === "aborted" || o.status === "aborted")
-                return Wt;
-            s.status === "dirty" && e.dirty(),
-                o.status === "dirty" && e.dirty(),
-                s.value !== "__proto__" && (typeof o.value < "u" || i.alwaysSet) && (n[s.value] = o.value)
-        }
-        return {
-            status: e.value,
-            value: n
-        }
-    }
-}
-const Wt = Object.freeze({
-    status: "aborted"
-})
-    , XO = r => ({
-        status: "dirty",
-        value: r
-    })
-    , hs = r => ({
-        status: "valid",
-        value: r
-    })
-    , yE = r => r.status === "aborted"
-    , wE = r => r.status === "dirty"
-    , Kg = r => r.status === "valid"
-    , Qy = r => typeof Promise < "u" && r instanceof Promise;
-var bt;
-(function (r) {
-    r.errToObj = e => typeof e == "string" ? {
-        message: e
-    } : e || {},
-        r.toString = e => typeof e == "string" ? e : e == null ? void 0 : e.message
-}
-)(bt || (bt = {}));
-class mc {
-    constructor(e, t, n, i) {
-        this._cachedPath = [],
-            this.parent = e,
-            this.data = t,
-            this._path = n,
-            this._key = i
-    }
-    get path() {
-        return this._cachedPath.length || (this._key instanceof Array ? this._cachedPath.push(...this._path, ...this._key) : this._cachedPath.push(...this._path, this._key)),
-            this._cachedPath
-    }
-}
-const FC = (r, e) => {
-    if (Kg(e))
-        return {
-            success: !0,
-            data: e.value
-        };
-    if (!r.common.issues.length)
-        throw new Error("Validation failed but no issues detected.");
-    return {
-        success: !1,
-        get error() {
-            if (this._error)
-                return this._error;
-            const t = new da(r.common.issues);
-            return this._error = t,
-                this._error
-        }
-    }
-}
-    ;
-function Kt(r) {
-    if (!r)
-        return {};
-    const { errorMap: e, invalid_type_error: t, required_error: n, description: i } = r;
-    if (e && (t || n))
-        throw new Error(`Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`);
-    return e ? {
-        errorMap: e,
-        description: i
-    } : {
-        errorMap: (o, a) => o.code !== "invalid_type" ? {
-            message: a.defaultError
-        } : typeof a.data > "u" ? {
-            message: n ?? a.defaultError
-        } : {
-            message: t ?? a.defaultError
-        },
-        description: i
-    }
-}
-class er {
-    constructor(e) {
-        this.spa = this.safeParseAsync,
-            this._def = e,
-            this.parse = this.parse.bind(this),
-            this.safeParse = this.safeParse.bind(this),
-            this.parseAsync = this.parseAsync.bind(this),
-            this.safeParseAsync = this.safeParseAsync.bind(this),
-            this.spa = this.spa.bind(this),
-            this.refine = this.refine.bind(this),
-            this.refinement = this.refinement.bind(this),
-            this.superRefine = this.superRefine.bind(this),
-            this.optional = this.optional.bind(this),
-            this.nullable = this.nullable.bind(this),
-            this.nullish = this.nullish.bind(this),
-            this.array = this.array.bind(this),
-            this.promise = this.promise.bind(this),
-            this.or = this.or.bind(this),
-            this.and = this.and.bind(this),
-            this.transform = this.transform.bind(this),
-            this.brand = this.brand.bind(this),
-            this.default = this.default.bind(this),
-            this.catch = this.catch.bind(this),
-            this.describe = this.describe.bind(this),
-            this.pipe = this.pipe.bind(this),
-            this.readonly = this.readonly.bind(this),
-            this.isNullable = this.isNullable.bind(this),
-            this.isOptional = this.isOptional.bind(this)
-    }
-    get description() {
-        return this._def.description
-    }
-    _getType(e) {
-        return Gl(e.data)
-    }
-    _getOrReturnCtx(e, t) {
-        return t || {
-            common: e.parent.common,
-            data: e.data,
-            parsedType: Gl(e.data),
-            schemaErrorMap: this._def.errorMap,
-            path: e.path,
-            parent: e.parent
-        }
-    }
-    _processInputParams(e) {
-        return {
-            status: new Ki,
-            ctx: {
-                common: e.parent.common,
-                data: e.data,
-                parsedType: Gl(e.data),
-                schemaErrorMap: this._def.errorMap,
-                path: e.path,
-                parent: e.parent
-            }
-        }
-    }
-    _parseSync(e) {
-        const t = this._parse(e);
-        if (Qy(t))
-            throw new Error("Synchronous parse encountered promise.");
-        return t
-    }
-    _parseAsync(e) {
-        const t = this._parse(e);
-        return Promise.resolve(t)
-    }
-    parse(e, t) {
-        const n = this.safeParse(e, t);
-        if (n.success)
-            return n.data;
-        throw n.error
-    }
-    safeParse(e, t) {
-        var n;
-        const i = {
-            common: {
-                issues: [],
-                async: (n = t == null ? void 0 : t.async) !== null && n !== void 0 ? n : !1,
-                contextualErrorMap: t == null ? void 0 : t.errorMap
-            },
-            path: (t == null ? void 0 : t.path) || [],
-            schemaErrorMap: this._def.errorMap,
-            parent: null,
-            data: e,
-            parsedType: Gl(e)
-        }
-            , s = this._parseSync({
-                data: e,
-                path: i.path,
-                parent: i
-            });
-        return FC(i, s)
-    }
-    async parseAsync(e, t) {
-        const n = await this.safeParseAsync(e, t);
-        if (n.success)
-            return n.data;
-        throw n.error
-    }
-    async safeParseAsync(e, t) {
-        const n = {
-            common: {
-                issues: [],
-                contextualErrorMap: t == null ? void 0 : t.errorMap,
-                async: !0
-            },
-            path: (t == null ? void 0 : t.path) || [],
-            schemaErrorMap: this._def.errorMap,
-            parent: null,
-            data: e,
-            parsedType: Gl(e)
-        }
-            , i = this._parse({
-                data: e,
-                path: n.path,
-                parent: n
-            })
-            , s = await (Qy(i) ? i : Promise.resolve(i));
-        return FC(n, s)
-    }
-    refine(e, t) {
-        const n = i => typeof t == "string" || typeof t > "u" ? {
-            message: t
-        } : typeof t == "function" ? t(i) : t;
-        return this._refinement((i, s) => {
-            const o = e(i)
-                , a = () => s.addIssue({
-                    code: $e.custom,
-                    ...n(i)
-                });
-            return typeof Promise < "u" && o instanceof Promise ? o.then(c => c ? !0 : (a(),
-                !1)) : o ? !0 : (a(),
-                    !1)
-        }
-        )
-    }
-    refinement(e, t) {
-        return this._refinement((n, i) => e(n) ? !0 : (i.addIssue(typeof t == "function" ? t(n, i) : t),
-            !1))
-    }
-    _refinement(e) {
-        return new Ea({
-            schema: this,
-            typeName: Mt.ZodEffects,
-            effect: {
-                type: "refinement",
-                refinement: e
-            }
-        })
-    }
-    superRefine(e) {
-        return this._refinement(e)
-    }
-    optional() {
-        return il.create(this, this._def)
-    }
-    nullable() {
-        return Kf.create(this, this._def)
-    }
-    nullish() {
-        return this.nullable().optional()
-    }
-    array() {
-        return pa.create(this, this._def)
-    }
-    promise() {
-        return o0.create(this, this._def)
-    }
-    or(e) {
-        return Qg.create([this, e], this._def)
-    }
-    and(e) {
-        return Xg.create(this, e, this._def)
-    }
-    transform(e) {
-        return new Ea({
-            ...Kt(this._def),
-            schema: this,
-            typeName: Mt.ZodEffects,
-            effect: {
-                type: "transform",
-                transform: e
-            }
-        })
-    }
-    default(e) {
-        const t = typeof e == "function" ? e : () => e;
-        return new i1({
-            ...Kt(this._def),
-            innerType: this,
-            defaultValue: t,
-            typeName: Mt.ZodDefault
-        })
-    }
-    brand() {
-        return new tP({
-            typeName: Mt.ZodBranded,
-            type: this,
-            ...Kt(this._def)
-        })
-    }
-    catch(e) {
-        const t = typeof e == "function" ? e : () => e;
-        return new rw({
-            ...Kt(this._def),
-            innerType: this,
-            catchValue: t,
-            typeName: Mt.ZodCatch
-        })
-    }
-    describe(e) {
-        const t = this.constructor;
-        return new t({
-            ...this._def,
-            description: e
-        })
-    }
-    pipe(e) {
-        return k1.create(this, e)
-    }
-    readonly() {
-        return iw.create(this)
-    }
-    isOptional() {
-        return this.safeParse(void 0).success
-    }
-    isNullable() {
-        return this.safeParse(null).success
-    }
-}
-const mee = /^c[^\s-]{8,}$/i
-    , vee = /^[a-z][a-z0-9]*$/
-    , yee = /^[0-9A-HJKMNP-TV-Z]{26}$/
-    , wee = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i
-    , bee = /^(?!\.)(?!.*\.\.)([A-Z0-9_+-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i
-    , _ee = "^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$";
-let I3;
-const Eee = /^(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))$/
-    , xee = /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/
-    , See = r => r.precision ? r.offset ? new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${r.precision}}(([+-]\\d{2}(:?\\d{2})?)|Z)$`) : new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${r.precision}}Z$`) : r.precision === 0 ? r.offset ? new RegExp("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}(:?\\d{2})?)|Z)$") : new RegExp("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$") : r.offset ? new RegExp("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}(:?\\d{2})?)|Z)$") : new RegExp("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$");
-function Aee(r, e) {
-    return !!((e === "v4" || !e) && Eee.test(r) || (e === "v6" || !e) && xee.test(r))
-}
-class fa extends er {
-    _parse(e) {
-        if (this._def.coerce && (e.data = String(e.data)),
-            this._getType(e) !== Je.string) {
-            const s = this._getOrReturnCtx(e);
-            return tt(s, {
-                code: $e.invalid_type,
-                expected: Je.string,
-                received: s.parsedType
-            }),
-                Wt
-        }
-        const n = new Ki;
-        let i;
-        for (const s of this._def.checks)
-            if (s.kind === "min")
-                e.data.length < s.value && (i = this._getOrReturnCtx(e, i),
-                    tt(i, {
-                        code: $e.too_small,
-                        minimum: s.value,
-                        type: "string",
-                        inclusive: !0,
-                        exact: !1,
-                        message: s.message
-                    }),
-                    n.dirty());
-            else if (s.kind === "max")
-                e.data.length > s.value && (i = this._getOrReturnCtx(e, i),
-                    tt(i, {
-                        code: $e.too_big,
-                        maximum: s.value,
-                        type: "string",
-                        inclusive: !0,
-                        exact: !1,
-                        message: s.message
-                    }),
-                    n.dirty());
-            else if (s.kind === "length") {
-                const o = e.data.length > s.value
-                    , a = e.data.length < s.value;
-                (o || a) && (i = this._getOrReturnCtx(e, i),
-                    o ? tt(i, {
-                        code: $e.too_big,
-                        maximum: s.value,
-                        type: "string",
-                        inclusive: !0,
-                        exact: !0,
-                        message: s.message
-                    }) : a && tt(i, {
-                        code: $e.too_small,
-                        minimum: s.value,
-                        type: "string",
-                        inclusive: !0,
-                        exact: !0,
-                        message: s.message
-                    }),
-                    n.dirty())
-            } else if (s.kind === "email")
-                bee.test(e.data) || (i = this._getOrReturnCtx(e, i),
-                    tt(i, {
-                        validation: "email",
-                        code: $e.invalid_string,
-                        message: s.message
-                    }),
-                    n.dirty());
-            else if (s.kind === "emoji")
-                I3 || (I3 = new RegExp(_ee, "u")),
-                    I3.test(e.data) || (i = this._getOrReturnCtx(e, i),
-                        tt(i, {
-                            validation: "emoji",
-                            code: $e.invalid_string,
-                            message: s.message
-                        }),
-                        n.dirty());
-            else if (s.kind === "uuid")
-                wee.test(e.data) || (i = this._getOrReturnCtx(e, i),
-                    tt(i, {
-                        validation: "uuid",
-                        code: $e.invalid_string,
-                        message: s.message
-                    }),
-                    n.dirty());
-            else if (s.kind === "cuid")
-                mee.test(e.data) || (i = this._getOrReturnCtx(e, i),
-                    tt(i, {
-                        validation: "cuid",
-                        code: $e.invalid_string,
-                        message: s.message
-                    }),
-                    n.dirty());
-            else if (s.kind === "cuid2")
-                vee.test(e.data) || (i = this._getOrReturnCtx(e, i),
-                    tt(i, {
-                        validation: "cuid2",
-                        code: $e.invalid_string,
-                        message: s.message
-                    }),
-                    n.dirty());
-            else if (s.kind === "ulid")
-                yee.test(e.data) || (i = this._getOrReturnCtx(e, i),
-                    tt(i, {
-                        validation: "ulid",
-                        code: $e.invalid_string,
-                        message: s.message
-                    }),
-                    n.dirty());
-            else if (s.kind === "url")
-                try {
-                    new URL(e.data)
-                } catch {
-                    i = this._getOrReturnCtx(e, i),
-                        tt(i, {
-                            validation: "url",
-                            code: $e.invalid_string,
-                            message: s.message
-                        }),
-                        n.dirty()
-                }
-            else
-                s.kind === "regex" ? (s.regex.lastIndex = 0,
-                    s.regex.test(e.data) || (i = this._getOrReturnCtx(e, i),
-                        tt(i, {
-                            validation: "regex",
-                            code: $e.invalid_string,
-                            message: s.message
-                        }),
-                        n.dirty())) : s.kind === "trim" ? e.data = e.data.trim() : s.kind === "includes" ? e.data.includes(s.value, s.position) || (i = this._getOrReturnCtx(e, i),
-                            tt(i, {
-                                code: $e.invalid_string,
-                                validation: {
-                                    includes: s.value,
-                                    position: s.position
-                                },
-                                message: s.message
-                            }),
-                            n.dirty()) : s.kind === "toLowerCase" ? e.data = e.data.toLowerCase() : s.kind === "toUpperCase" ? e.data = e.data.toUpperCase() : s.kind === "startsWith" ? e.data.startsWith(s.value) || (i = this._getOrReturnCtx(e, i),
-                                tt(i, {
-                                    code: $e.invalid_string,
-                                    validation: {
-                                        startsWith: s.value
-                                    },
-                                    message: s.message
-                                }),
-                                n.dirty()) : s.kind === "endsWith" ? e.data.endsWith(s.value) || (i = this._getOrReturnCtx(e, i),
-                                    tt(i, {
-                                        code: $e.invalid_string,
-                                        validation: {
-                                            endsWith: s.value
-                                        },
-                                        message: s.message
-                                    }),
-                                    n.dirty()) : s.kind === "datetime" ? See(s).test(e.data) || (i = this._getOrReturnCtx(e, i),
-                                        tt(i, {
-                                            code: $e.invalid_string,
-                                            validation: "datetime",
-                                            message: s.message
-                                        }),
-                                        n.dirty()) : s.kind === "ip" ? Aee(e.data, s.version) || (i = this._getOrReturnCtx(e, i),
-                                            tt(i, {
-                                                validation: "ip",
-                                                code: $e.invalid_string,
-                                                message: s.message
-                                            }),
-                                            n.dirty()) : Dr.assertNever(s);
-        return {
-            status: n.value,
-            value: e.data
-        }
-    }
-    _regex(e, t, n) {
-        return this.refinement(i => e.test(i), {
-            validation: t,
-            code: $e.invalid_string,
-            ...bt.errToObj(n)
-        })
-    }
-    _addCheck(e) {
-        return new fa({
-            ...this._def,
-            checks: [...this._def.checks, e]
-        })
-    }
-    email(e) {
-        return this._addCheck({
-            kind: "email",
-            ...bt.errToObj(e)
-        })
-    }
-    url(e) {
-        return this._addCheck({
-            kind: "url",
-            ...bt.errToObj(e)
-        })
-    }
-    emoji(e) {
-        return this._addCheck({
-            kind: "emoji",
-            ...bt.errToObj(e)
-        })
-    }
-    uuid(e) {
-        return this._addCheck({
-            kind: "uuid",
-            ...bt.errToObj(e)
-        })
-    }
-    cuid(e) {
-        return this._addCheck({
-            kind: "cuid",
-            ...bt.errToObj(e)
-        })
-    }
-    cuid2(e) {
-        return this._addCheck({
-            kind: "cuid2",
-            ...bt.errToObj(e)
-        })
-    }
-    ulid(e) {
-        return this._addCheck({
-            kind: "ulid",
-            ...bt.errToObj(e)
-        })
-    }
-    ip(e) {
-        return this._addCheck({
-            kind: "ip",
-            ...bt.errToObj(e)
-        })
-    }
-    datetime(e) {
-        var t;
-        return typeof e == "string" ? this._addCheck({
-            kind: "datetime",
-            precision: null,
-            offset: !1,
-            message: e
-        }) : this._addCheck({
-            kind: "datetime",
-            precision: typeof (e == null ? void 0 : e.precision) > "u" ? null : e == null ? void 0 : e.precision,
-            offset: (t = e == null ? void 0 : e.offset) !== null && t !== void 0 ? t : !1,
-            ...bt.errToObj(e == null ? void 0 : e.message)
-        })
-    }
-    regex(e, t) {
-        return this._addCheck({
-            kind: "regex",
-            regex: e,
-            ...bt.errToObj(t)
-        })
-    }
-    includes(e, t) {
-        return this._addCheck({
-            kind: "includes",
-            value: e,
-            position: t == null ? void 0 : t.position,
-            ...bt.errToObj(t == null ? void 0 : t.message)
-        })
-    }
-    startsWith(e, t) {
-        return this._addCheck({
-            kind: "startsWith",
-            value: e,
-            ...bt.errToObj(t)
-        })
-    }
-    endsWith(e, t) {
-        return this._addCheck({
-            kind: "endsWith",
-            value: e,
-            ...bt.errToObj(t)
-        })
-    }
-    min(e, t) {
-        return this._addCheck({
-            kind: "min",
-            value: e,
-            ...bt.errToObj(t)
-        })
-    }
-    max(e, t) {
-        return this._addCheck({
-            kind: "max",
-            value: e,
-            ...bt.errToObj(t)
-        })
-    }
-    length(e, t) {
-        return this._addCheck({
-            kind: "length",
-            value: e,
-            ...bt.errToObj(t)
-        })
-    }
-    nonempty(e) {
-        return this.min(1, bt.errToObj(e))
-    }
-    trim() {
-        return new fa({
-            ...this._def,
-            checks: [...this._def.checks, {
-                kind: "trim"
-            }]
-        })
-    }
-    toLowerCase() {
-        return new fa({
-            ...this._def,
-            checks: [...this._def.checks, {
-                kind: "toLowerCase"
-            }]
-        })
-    }
-    toUpperCase() {
-        return new fa({
-            ...this._def,
-            checks: [...this._def.checks, {
-                kind: "toUpperCase"
-            }]
-        })
-    }
-    get isDatetime() {
-        return !!this._def.checks.find(e => e.kind === "datetime")
-    }
-    get isEmail() {
-        return !!this._def.checks.find(e => e.kind === "email")
-    }
-    get isURL() {
-        return !!this._def.checks.find(e => e.kind === "url")
-    }
-    get isEmoji() {
-        return !!this._def.checks.find(e => e.kind === "emoji")
-    }
-    get isUUID() {
-        return !!this._def.checks.find(e => e.kind === "uuid")
-    }
-    get isCUID() {
-        return !!this._def.checks.find(e => e.kind === "cuid")
-    }
-    get isCUID2() {
-        return !!this._def.checks.find(e => e.kind === "cuid2")
-    }
-    get isULID() {
-        return !!this._def.checks.find(e => e.kind === "ulid")
-    }
-    get isIP() {
-        return !!this._def.checks.find(e => e.kind === "ip")
-    }
-    get minLength() {
-        let e = null;
-        for (const t of this._def.checks)
-            t.kind === "min" && (e === null || t.value > e) && (e = t.value);
-        return e
-    }
-    get maxLength() {
-        let e = null;
-        for (const t of this._def.checks)
-            t.kind === "max" && (e === null || t.value < e) && (e = t.value);
-        return e
-    }
-}
-fa.create = r => {
-    var e;
-    return new fa({
-        checks: [],
-        typeName: Mt.ZodString,
-        coerce: (e = r == null ? void 0 : r.coerce) !== null && e !== void 0 ? e : !1,
-        ...Kt(r)
-    })
-}
-    ;
-function Cee(r, e) {
-    const t = (r.toString().split(".")[1] || "").length
-        , n = (e.toString().split(".")[1] || "").length
-        , i = t > n ? t : n
-        , s = parseInt(r.toFixed(i).replace(".", ""))
-        , o = parseInt(e.toFixed(i).replace(".", ""));
-    return s % o / Math.pow(10, i)
-}
-class uu extends er {
-    constructor() {
-        super(...arguments),
-            this.min = this.gte,
-            this.max = this.lte,
-            this.step = this.multipleOf
-    }
-    _parse(e) {
-        if (this._def.coerce && (e.data = Number(e.data)),
-            this._getType(e) !== Je.number) {
-            const s = this._getOrReturnCtx(e);
-            return tt(s, {
-                code: $e.invalid_type,
-                expected: Je.number,
-                received: s.parsedType
-            }),
-                Wt
-        }
-        let n;
-        const i = new Ki;
-        for (const s of this._def.checks)
-            s.kind === "int" ? Dr.isInteger(e.data) || (n = this._getOrReturnCtx(e, n),
-                tt(n, {
-                    code: $e.invalid_type,
-                    expected: "integer",
-                    received: "float",
-                    message: s.message
-                }),
-                i.dirty()) : s.kind === "min" ? (s.inclusive ? e.data < s.value : e.data <= s.value) && (n = this._getOrReturnCtx(e, n),
-                    tt(n, {
-                        code: $e.too_small,
-                        minimum: s.value,
-                        type: "number",
-                        inclusive: s.inclusive,
-                        exact: !1,
-                        message: s.message
-                    }),
-                    i.dirty()) : s.kind === "max" ? (s.inclusive ? e.data > s.value : e.data >= s.value) && (n = this._getOrReturnCtx(e, n),
-                        tt(n, {
-                            code: $e.too_big,
-                            maximum: s.value,
-                            type: "number",
-                            inclusive: s.inclusive,
-                            exact: !1,
-                            message: s.message
-                        }),
-                        i.dirty()) : s.kind === "multipleOf" ? Cee(e.data, s.value) !== 0 && (n = this._getOrReturnCtx(e, n),
-                            tt(n, {
-                                code: $e.not_multiple_of,
-                                multipleOf: s.value,
-                                message: s.message
-                            }),
-                            i.dirty()) : s.kind === "finite" ? Number.isFinite(e.data) || (n = this._getOrReturnCtx(e, n),
-                                tt(n, {
-                                    code: $e.not_finite,
-                                    message: s.message
-                                }),
-                                i.dirty()) : Dr.assertNever(s);
-        return {
-            status: i.value,
-            value: e.data
-        }
-    }
-    gte(e, t) {
-        return this.setLimit("min", e, !0, bt.toString(t))
-    }
-    gt(e, t) {
-        return this.setLimit("min", e, !1, bt.toString(t))
-    }
-    lte(e, t) {
-        return this.setLimit("max", e, !0, bt.toString(t))
-    }
-    lt(e, t) {
-        return this.setLimit("max", e, !1, bt.toString(t))
-    }
-    setLimit(e, t, n, i) {
-        return new uu({
-            ...this._def,
-            checks: [...this._def.checks, {
-                kind: e,
-                value: t,
-                inclusive: n,
-                message: bt.toString(i)
-            }]
-        })
-    }
-    _addCheck(e) {
-        return new uu({
-            ...this._def,
-            checks: [...this._def.checks, e]
-        })
-    }
-    int(e) {
-        return this._addCheck({
-            kind: "int",
-            message: bt.toString(e)
-        })
-    }
-    positive(e) {
-        return this._addCheck({
-            kind: "min",
-            value: 0,
-            inclusive: !1,
-            message: bt.toString(e)
-        })
-    }
-    negative(e) {
-        return this._addCheck({
-            kind: "max",
-            value: 0,
-            inclusive: !1,
-            message: bt.toString(e)
-        })
-    }
-    nonpositive(e) {
-        return this._addCheck({
-            kind: "max",
-            value: 0,
-            inclusive: !0,
-            message: bt.toString(e)
-        })
-    }
-    nonnegative(e) {
-        return this._addCheck({
-            kind: "min",
-            value: 0,
-            inclusive: !0,
-            message: bt.toString(e)
-        })
-    }
-    multipleOf(e, t) {
-        return this._addCheck({
-            kind: "multipleOf",
-            value: e,
-            message: bt.toString(t)
-        })
-    }
-    finite(e) {
-        return this._addCheck({
-            kind: "finite",
-            message: bt.toString(e)
-        })
-    }
-    safe(e) {
-        return this._addCheck({
-            kind: "min",
-            inclusive: !0,
-            value: Number.MIN_SAFE_INTEGER,
-            message: bt.toString(e)
-        })._addCheck({
-            kind: "max",
-            inclusive: !0,
-            value: Number.MAX_SAFE_INTEGER,
-            message: bt.toString(e)
-        })
-    }
-    get minValue() {
-        let e = null;
-        for (const t of this._def.checks)
-            t.kind === "min" && (e === null || t.value > e) && (e = t.value);
-        return e
-    }
-    get maxValue() {
-        let e = null;
-        for (const t of this._def.checks)
-            t.kind === "max" && (e === null || t.value < e) && (e = t.value);
-        return e
-    }
-    get isInt() {
-        return !!this._def.checks.find(e => e.kind === "int" || e.kind === "multipleOf" && Dr.isInteger(e.value))
-    }
-    get isFinite() {
-        let e = null
-            , t = null;
-        for (const n of this._def.checks) {
-            if (n.kind === "finite" || n.kind === "int" || n.kind === "multipleOf")
-                return !0;
-            n.kind === "min" ? (t === null || n.value > t) && (t = n.value) : n.kind === "max" && (e === null || n.value < e) && (e = n.value)
-        }
-        return Number.isFinite(t) && Number.isFinite(e)
-    }
-}
-uu.create = r => new uu({
-    checks: [],
-    typeName: Mt.ZodNumber,
-    coerce: (r == null ? void 0 : r.coerce) || !1,
-    ...Kt(r)
-});
-class fu extends er {
-    constructor() {
-        super(...arguments),
-            this.min = this.gte,
-            this.max = this.lte
-    }
-    _parse(e) {
-        if (this._def.coerce && (e.data = BigInt(e.data)),
-            this._getType(e) !== Je.bigint) {
-            const s = this._getOrReturnCtx(e);
-            return tt(s, {
-                code: $e.invalid_type,
-                expected: Je.bigint,
-                received: s.parsedType
-            }),
-                Wt
-        }
-        let n;
-        const i = new Ki;
-        for (const s of this._def.checks)
-            s.kind === "min" ? (s.inclusive ? e.data < s.value : e.data <= s.value) && (n = this._getOrReturnCtx(e, n),
-                tt(n, {
-                    code: $e.too_small,
-                    type: "bigint",
-                    minimum: s.value,
-                    inclusive: s.inclusive,
-                    message: s.message
-                }),
-                i.dirty()) : s.kind === "max" ? (s.inclusive ? e.data > s.value : e.data >= s.value) && (n = this._getOrReturnCtx(e, n),
-                    tt(n, {
-                        code: $e.too_big,
-                        type: "bigint",
-                        maximum: s.value,
-                        inclusive: s.inclusive,
-                        message: s.message
-                    }),
-                    i.dirty()) : s.kind === "multipleOf" ? e.data % s.value !== BigInt(0) && (n = this._getOrReturnCtx(e, n),
-                        tt(n, {
-                            code: $e.not_multiple_of,
-                            multipleOf: s.value,
-                            message: s.message
-                        }),
-                        i.dirty()) : Dr.assertNever(s);
-        return {
-            status: i.value,
-            value: e.data
-        }
-    }
-    gte(e, t) {
-        return this.setLimit("min", e, !0, bt.toString(t))
-    }
-    gt(e, t) {
-        return this.setLimit("min", e, !1, bt.toString(t))
-    }
-    lte(e, t) {
-        return this.setLimit("max", e, !0, bt.toString(t))
-    }
-    lt(e, t) {
-        return this.setLimit("max", e, !1, bt.toString(t))
-    }
-    setLimit(e, t, n, i) {
-        return new fu({
-            ...this._def,
-            checks: [...this._def.checks, {
-                kind: e,
-                value: t,
-                inclusive: n,
-                message: bt.toString(i)
-            }]
-        })
-    }
-    _addCheck(e) {
-        return new fu({
-            ...this._def,
-            checks: [...this._def.checks, e]
-        })
-    }
-    positive(e) {
-        return this._addCheck({
-            kind: "min",
-            value: BigInt(0),
-            inclusive: !1,
-            message: bt.toString(e)
-        })
-    }
-    negative(e) {
-        return this._addCheck({
-            kind: "max",
-            value: BigInt(0),
-            inclusive: !1,
-            message: bt.toString(e)
-        })
-    }
-    nonpositive(e) {
-        return this._addCheck({
-            kind: "max",
-            value: BigInt(0),
-            inclusive: !0,
-            message: bt.toString(e)
-        })
-    }
-    nonnegative(e) {
-        return this._addCheck({
-            kind: "min",
-            value: BigInt(0),
-            inclusive: !0,
-            message: bt.toString(e)
-        })
-    }
-    multipleOf(e, t) {
-        return this._addCheck({
-            kind: "multipleOf",
-            value: e,
-            message: bt.toString(t)
-        })
-    }
-    get minValue() {
-        let e = null;
-        for (const t of this._def.checks)
-            t.kind === "min" && (e === null || t.value > e) && (e = t.value);
-        return e
-    }
-    get maxValue() {
-        let e = null;
-        for (const t of this._def.checks)
-            t.kind === "max" && (e === null || t.value < e) && (e = t.value);
-        return e
-    }
-}
-fu.create = r => {
-    var e;
-    return new fu({
-        checks: [],
-        typeName: Mt.ZodBigInt,
-        coerce: (e = r == null ? void 0 : r.coerce) !== null && e !== void 0 ? e : !1,
-        ...Kt(r)
-    })
-}
-    ;
-class Zg extends er {
-    _parse(e) {
-        if (this._def.coerce && (e.data = !!e.data),
-            this._getType(e) !== Je.boolean) {
-            const n = this._getOrReturnCtx(e);
-            return tt(n, {
-                code: $e.invalid_type,
-                expected: Je.boolean,
-                received: n.parsedType
-            }),
-                Wt
-        }
-        return hs(e.data)
-    }
-}
-Zg.create = r => new Zg({
-    typeName: Mt.ZodBoolean,
-    coerce: (r == null ? void 0 : r.coerce) || !1,
-    ...Kt(r)
-});
-class qf extends er {
-    _parse(e) {
-        if (this._def.coerce && (e.data = new Date(e.data)),
-            this._getType(e) !== Je.date) {
-            const s = this._getOrReturnCtx(e);
-            return tt(s, {
-                code: $e.invalid_type,
-                expected: Je.date,
-                received: s.parsedType
-            }),
-                Wt
-        }
-        if (isNaN(e.data.getTime())) {
-            const s = this._getOrReturnCtx(e);
-            return tt(s, {
-                code: $e.invalid_date
-            }),
-                Wt
-        }
-        const n = new Ki;
-        let i;
-        for (const s of this._def.checks)
-            s.kind === "min" ? e.data.getTime() < s.value && (i = this._getOrReturnCtx(e, i),
-                tt(i, {
-                    code: $e.too_small,
-                    message: s.message,
-                    inclusive: !0,
-                    exact: !1,
-                    minimum: s.value,
-                    type: "date"
-                }),
-                n.dirty()) : s.kind === "max" ? e.data.getTime() > s.value && (i = this._getOrReturnCtx(e, i),
-                    tt(i, {
-                        code: $e.too_big,
-                        message: s.message,
-                        inclusive: !0,
-                        exact: !1,
-                        maximum: s.value,
-                        type: "date"
-                    }),
-                    n.dirty()) : Dr.assertNever(s);
-        return {
-            status: n.value,
-            value: new Date(e.data.getTime())
-        }
-    }
-    _addCheck(e) {
-        return new qf({
-            ...this._def,
-            checks: [...this._def.checks, e]
-        })
-    }
-    min(e, t) {
-        return this._addCheck({
-            kind: "min",
-            value: e.getTime(),
-            message: bt.toString(t)
-        })
-    }
-    max(e, t) {
-        return this._addCheck({
-            kind: "max",
-            value: e.getTime(),
-            message: bt.toString(t)
-        })
-    }
-    get minDate() {
-        let e = null;
-        for (const t of this._def.checks)
-            t.kind === "min" && (e === null || t.value > e) && (e = t.value);
-        return e != null ? new Date(e) : null
-    }
-    get maxDate() {
-        let e = null;
-        for (const t of this._def.checks)
-            t.kind === "max" && (e === null || t.value < e) && (e = t.value);
-        return e != null ? new Date(e) : null
-    }
-}
-qf.create = r => new qf({
-    checks: [],
-    coerce: (r == null ? void 0 : r.coerce) || !1,
-    typeName: Mt.ZodDate,
-    ...Kt(r)
-});
-class Xy extends er {
-    _parse(e) {
-        if (this._getType(e) !== Je.symbol) {
-            const n = this._getOrReturnCtx(e);
-            return tt(n, {
-                code: $e.invalid_type,
-                expected: Je.symbol,
-                received: n.parsedType
-            }),
-                Wt
-        }
-        return hs(e.data)
-    }
-}
-Xy.create = r => new Xy({
-    typeName: Mt.ZodSymbol,
-    ...Kt(r)
-});
-class Jg extends er {
-    _parse(e) {
-        if (this._getType(e) !== Je.undefined) {
-            const n = this._getOrReturnCtx(e);
-            return tt(n, {
-                code: $e.invalid_type,
-                expected: Je.undefined,
-                received: n.parsedType
-            }),
-                Wt
-        }
-        return hs(e.data)
-    }
-}
-Jg.create = r => new Jg({
-    typeName: Mt.ZodUndefined,
-    ...Kt(r)
-});
-class Yg extends er {
-    _parse(e) {
-        if (this._getType(e) !== Je.null) {
-            const n = this._getOrReturnCtx(e);
-            return tt(n, {
-                code: $e.invalid_type,
-                expected: Je.null,
-                received: n.parsedType
-            }),
-                Wt
-        }
-        return hs(e.data)
-    }
-}
-Yg.create = r => new Yg({
-    typeName: Mt.ZodNull,
-    ...Kt(r)
-});
-class s0 extends er {
-    constructor() {
-        super(...arguments),
-            this._any = !0
-    }
-    _parse(e) {
-        return hs(e.data)
-    }
-}
-s0.create = r => new s0({
-    typeName: Mt.ZodAny,
-    ...Kt(r)
-});
-class Ef extends er {
-    constructor() {
-        super(...arguments),
-            this._unknown = !0
-    }
-    _parse(e) {
-        return hs(e.data)
-    }
-}
-Ef.create = r => new Ef({
-    typeName: Mt.ZodUnknown,
-    ...Kt(r)
-});
-class fl extends er {
-    _parse(e) {
-        const t = this._getOrReturnCtx(e);
-        return tt(t, {
-            code: $e.invalid_type,
-            expected: Je.never,
-            received: t.parsedType
-        }),
-            Wt
-    }
-}
-fl.create = r => new fl({
-    typeName: Mt.ZodNever,
-    ...Kt(r)
-});
-class ew extends er {
-    _parse(e) {
-        if (this._getType(e) !== Je.undefined) {
-            const n = this._getOrReturnCtx(e);
-            return tt(n, {
-                code: $e.invalid_type,
-                expected: Je.void,
-                received: n.parsedType
-            }),
-                Wt
-        }
-        return hs(e.data)
-    }
-}
-ew.create = r => new ew({
-    typeName: Mt.ZodVoid,
-    ...Kt(r)
-});
-class pa extends er {
-    _parse(e) {
-        const { ctx: t, status: n } = this._processInputParams(e)
-            , i = this._def;
-        if (t.parsedType !== Je.array)
-            return tt(t, {
-                code: $e.invalid_type,
-                expected: Je.array,
-                received: t.parsedType
-            }),
-                Wt;
-        if (i.exactLength !== null) {
-            const o = t.data.length > i.exactLength.value
-                , a = t.data.length < i.exactLength.value;
-            (o || a) && (tt(t, {
-                code: o ? $e.too_big : $e.too_small,
-                minimum: a ? i.exactLength.value : void 0,
-                maximum: o ? i.exactLength.value : void 0,
-                type: "array",
-                inclusive: !0,
-                exact: !0,
-                message: i.exactLength.message
-            }),
-                n.dirty())
-        }
-        if (i.minLength !== null && t.data.length < i.minLength.value && (tt(t, {
-            code: $e.too_small,
-            minimum: i.minLength.value,
-            type: "array",
-            inclusive: !0,
-            exact: !1,
-            message: i.minLength.message
-        }),
-            n.dirty()),
-            i.maxLength !== null && t.data.length > i.maxLength.value && (tt(t, {
-                code: $e.too_big,
-                maximum: i.maxLength.value,
-                type: "array",
-                inclusive: !0,
-                exact: !1,
-                message: i.maxLength.message
-            }),
-                n.dirty()),
-            t.common.async)
-            return Promise.all([...t.data].map((o, a) => i.type._parseAsync(new mc(t, o, t.path, a)))).then(o => Ki.mergeArray(n, o));
-        const s = [...t.data].map((o, a) => i.type._parseSync(new mc(t, o, t.path, a)));
-        return Ki.mergeArray(n, s)
-    }
-    get element() {
-        return this._def.type
-    }
-    min(e, t) {
-        return new pa({
-            ...this._def,
-            minLength: {
-                value: e,
-                message: bt.toString(t)
-            }
-        })
-    }
-    max(e, t) {
-        return new pa({
-            ...this._def,
-            maxLength: {
-                value: e,
-                message: bt.toString(t)
-            }
-        })
-    }
-    length(e, t) {
-        return new pa({
-            ...this._def,
-            exactLength: {
-                value: e,
-                message: bt.toString(t)
-            }
-        })
-    }
-    nonempty(e) {
-        return this.min(1, e)
-    }
-}
-pa.create = (r, e) => new pa({
-    type: r,
-    minLength: null,
-    maxLength: null,
-    exactLength: null,
-    typeName: Mt.ZodArray,
-    ...Kt(e)
-});
-function od(r) {
-    if (r instanceof yn) {
-        const e = {};
-        for (const t in r.shape) {
-            const n = r.shape[t];
-            e[t] = il.create(od(n))
-        }
-        return new yn({
-            ...r._def,
-            shape: () => e
-        })
-    } else
-        return r instanceof pa ? new pa({
-            ...r._def,
-            type: od(r.element)
-        }) : r instanceof il ? il.create(od(r.unwrap())) : r instanceof Kf ? Kf.create(od(r.unwrap())) : r instanceof vc ? vc.create(r.items.map(e => od(e))) : r
-}
-class yn extends er {
-    constructor() {
-        super(...arguments),
-            this._cached = null,
-            this.nonstrict = this.passthrough,
-            this.augment = this.extend
-    }
-    _getCached() {
-        if (this._cached !== null)
-            return this._cached;
-        const e = this._def.shape()
-            , t = Dr.objectKeys(e);
-        return this._cached = {
-            shape: e,
-            keys: t
-        }
-    }
-    _parse(e) {
-        if (this._getType(e) !== Je.object) {
-            const u = this._getOrReturnCtx(e);
-            return tt(u, {
-                code: $e.invalid_type,
-                expected: Je.object,
-                received: u.parsedType
-            }),
-                Wt
-        }
-        const { status: n, ctx: i } = this._processInputParams(e)
-            , { shape: s, keys: o } = this._getCached()
-            , a = [];
-        if (!(this._def.catchall instanceof fl && this._def.unknownKeys === "strip"))
-            for (const u in i.data)
-                o.includes(u) || a.push(u);
-        const c = [];
-        for (const u of o) {
-            const d = s[u]
-                , f = i.data[u];
-            c.push({
-                key: {
-                    status: "valid",
-                    value: u
-                },
-                value: d._parse(new mc(i, f, i.path, u)),
-                alwaysSet: u in i.data
-            })
-        }
-        if (this._def.catchall instanceof fl) {
-            const u = this._def.unknownKeys;
-            if (u === "passthrough")
-                for (const d of a)
-                    c.push({
-                        key: {
-                            status: "valid",
-                            value: d
-                        },
-                        value: {
-                            status: "valid",
-                            value: i.data[d]
-                        }
-                    });
-            else if (u === "strict")
-                a.length > 0 && (tt(i, {
-                    code: $e.unrecognized_keys,
-                    keys: a
-                }),
-                    n.dirty());
-            else if (u !== "strip")
-                throw new Error("Internal ZodObject error: invalid unknownKeys value.")
-        } else {
-            const u = this._def.catchall;
-            for (const d of a) {
-                const f = i.data[d];
-                c.push({
-                    key: {
-                        status: "valid",
-                        value: d
-                    },
-                    value: u._parse(new mc(i, f, i.path, d)),
-                    alwaysSet: d in i.data
-                })
-            }
-        }
-        return i.common.async ? Promise.resolve().then(async () => {
-            const u = [];
-            for (const d of c) {
-                const f = await d.key;
-                u.push({
-                    key: f,
-                    value: await d.value,
-                    alwaysSet: d.alwaysSet
-                })
-            }
-            return u
-        }
-        ).then(u => Ki.mergeObjectSync(n, u)) : Ki.mergeObjectSync(n, c)
-    }
-    get shape() {
-        return this._def.shape()
-    }
-    strict(e) {
-        return bt.errToObj,
-            new yn({
-                ...this._def,
-                unknownKeys: "strict",
-                ...e !== void 0 ? {
-                    errorMap: (t, n) => {
-                        var i, s, o, a;
-                        const c = (o = (s = (i = this._def).errorMap) === null || s === void 0 ? void 0 : s.call(i, t, n).message) !== null && o !== void 0 ? o : n.defaultError;
-                        return t.code === "unrecognized_keys" ? {
-                            message: (a = bt.errToObj(e).message) !== null && a !== void 0 ? a : c
-                        } : {
-                            message: c
-                        }
-                    }
-                } : {}
-            })
-    }
-    strip() {
-        return new yn({
-            ...this._def,
-            unknownKeys: "strip"
-        })
-    }
-    passthrough() {
-        return new yn({
-            ...this._def,
-            unknownKeys: "passthrough"
-        })
-    }
-    extend(e) {
-        return new yn({
-            ...this._def,
-            shape: () => ({
-                ...this._def.shape(),
-                ...e
-            })
-        })
-    }
-    merge(e) {
-        return new yn({
-            unknownKeys: e._def.unknownKeys,
-            catchall: e._def.catchall,
-            shape: () => ({
-                ...this._def.shape(),
-                ...e._def.shape()
-            }),
-            typeName: Mt.ZodObject
-        })
-    }
-    setKey(e, t) {
-        return this.augment({
-            [e]: t
-        })
-    }
-    catchall(e) {
-        return new yn({
-            ...this._def,
-            catchall: e
-        })
-    }
-    pick(e) {
-        const t = {};
-        return Dr.objectKeys(e).forEach(n => {
-            e[n] && this.shape[n] && (t[n] = this.shape[n])
-        }
-        ),
-            new yn({
-                ...this._def,
-                shape: () => t
-            })
-    }
-    omit(e) {
-        const t = {};
-        return Dr.objectKeys(this.shape).forEach(n => {
-            e[n] || (t[n] = this.shape[n])
-        }
-        ),
-            new yn({
-                ...this._def,
-                shape: () => t
-            })
-    }
-    deepPartial() {
-        return od(this)
-    }
-    partial(e) {
-        const t = {};
-        return Dr.objectKeys(this.shape).forEach(n => {
-            const i = this.shape[n];
-            e && !e[n] ? t[n] = i : t[n] = i.optional()
-        }
-        ),
-            new yn({
-                ...this._def,
-                shape: () => t
-            })
-    }
-    required(e) {
-        const t = {};
-        return Dr.objectKeys(this.shape).forEach(n => {
-            if (e && !e[n])
-                t[n] = this.shape[n];
-            else {
-                let s = this.shape[n];
-                for (; s instanceof il;)
-                    s = s._def.innerType;
-                t[n] = s
-            }
-        }
-        ),
-            new yn({
-                ...this._def,
-                shape: () => t
-            })
-    }
-    keyof() {
-        return eP(Dr.objectKeys(this.shape))
-    }
-}
-yn.create = (r, e) => new yn({
-    shape: () => r,
-    unknownKeys: "strip",
-    catchall: fl.create(),
-    typeName: Mt.ZodObject,
-    ...Kt(e)
-});
-yn.strictCreate = (r, e) => new yn({
-    shape: () => r,
-    unknownKeys: "strict",
-    catchall: fl.create(),
-    typeName: Mt.ZodObject,
-    ...Kt(e)
-});
-yn.lazycreate = (r, e) => new yn({
-    shape: r,
-    unknownKeys: "strip",
-    catchall: fl.create(),
-    typeName: Mt.ZodObject,
-    ...Kt(e)
-});
-class Qg extends er {
-    _parse(e) {
-        const { ctx: t } = this._processInputParams(e)
-            , n = this._def.options;
-        function i(s) {
-            for (const a of s)
-                if (a.result.status === "valid")
-                    return a.result;
-            for (const a of s)
-                if (a.result.status === "dirty")
-                    return t.common.issues.push(...a.ctx.common.issues),
-                        a.result;
-            const o = s.map(a => new da(a.ctx.common.issues));
-            return tt(t, {
-                code: $e.invalid_union,
-                unionErrors: o
-            }),
-                Wt
-        }
-        if (t.common.async)
-            return Promise.all(n.map(async s => {
-                const o = {
-                    ...t,
-                    common: {
-                        ...t.common,
-                        issues: []
-                    },
-                    parent: null
-                };
-                return {
-                    result: await s._parseAsync({
-                        data: t.data,
-                        path: t.path,
-                        parent: o
-                    }),
-                    ctx: o
-                }
-            }
-            )).then(i);
-        {
-            let s;
-            const o = [];
-            for (const c of n) {
-                const u = {
-                    ...t,
-                    common: {
-                        ...t.common,
-                        issues: []
-                    },
-                    parent: null
-                }
-                    , d = c._parseSync({
-                        data: t.data,
-                        path: t.path,
-                        parent: u
-                    });
-                if (d.status === "valid")
-                    return d;
-                d.status === "dirty" && !s && (s = {
-                    result: d,
-                    ctx: u
-                }),
-                    u.common.issues.length && o.push(u.common.issues)
-            }
-            if (s)
-                return t.common.issues.push(...s.ctx.common.issues),
-                    s.result;
-            const a = o.map(c => new da(c));
-            return tt(t, {
-                code: $e.invalid_union,
-                unionErrors: a
-            }),
-                Wt
-        }
-    }
-    get options() {
-        return this._def.options
-    }
-}
-Qg.create = (r, e) => new Qg({
-    options: r,
-    typeName: Mt.ZodUnion,
-    ...Kt(e)
-});
-const fy = r => r instanceof t1 ? fy(r.schema) : r instanceof Ea ? fy(r.innerType()) : r instanceof r1 ? [r.value] : r instanceof hu ? r.options : r instanceof n1 ? Object.keys(r.enum) : r instanceof i1 ? fy(r._def.innerType) : r instanceof Jg ? [void 0] : r instanceof Yg ? [null] : null;
-class lb extends er {
-    _parse(e) {
-        const { ctx: t } = this._processInputParams(e);
-        if (t.parsedType !== Je.object)
-            return tt(t, {
-                code: $e.invalid_type,
-                expected: Je.object,
-                received: t.parsedType
-            }),
-                Wt;
-        const n = this.discriminator
-            , i = t.data[n]
-            , s = this.optionsMap.get(i);
-        return s ? t.common.async ? s._parseAsync({
-            data: t.data,
-            path: t.path,
-            parent: t
-        }) : s._parseSync({
-            data: t.data,
-            path: t.path,
-            parent: t
-        }) : (tt(t, {
-            code: $e.invalid_union_discriminator,
-            options: Array.from(this.optionsMap.keys()),
-            path: [n]
-        }),
-            Wt)
-    }
-    get discriminator() {
-        return this._def.discriminator
-    }
-    get options() {
-        return this._def.options
-    }
-    get optionsMap() {
-        return this._def.optionsMap
-    }
-    static create(e, t, n) {
-        const i = new Map;
-        for (const s of t) {
-            const o = fy(s.shape[e]);
-            if (!o)
-                throw new Error(`A discriminator value for key \`${e}\` could not be extracted from all schema options`);
-            for (const a of o) {
-                if (i.has(a))
-                    throw new Error(`Discriminator property ${String(e)} has duplicate value ${String(a)}`);
-                i.set(a, s)
-            }
-        }
-        return new lb({
-            typeName: Mt.ZodDiscriminatedUnion,
-            discriminator: e,
-            options: t,
-            optionsMap: i,
-            ...Kt(n)
-        })
-    }
-}
-function bE(r, e) {
-    const t = Gl(r)
-        , n = Gl(e);
-    if (r === e)
-        return {
-            valid: !0,
-            data: r
-        };
-    if (t === Je.object && n === Je.object) {
-        const i = Dr.objectKeys(e)
-            , s = Dr.objectKeys(r).filter(a => i.indexOf(a) !== -1)
-            , o = {
-                ...r,
-                ...e
-            };
-        for (const a of s) {
-            const c = bE(r[a], e[a]);
-            if (!c.valid)
-                return {
-                    valid: !1
-                };
-            o[a] = c.data
-        }
-        return {
-            valid: !0,
-            data: o
-        }
-    } else if (t === Je.array && n === Je.array) {
-        if (r.length !== e.length)
-            return {
-                valid: !1
-            };
-        const i = [];
-        for (let s = 0; s < r.length; s++) {
-            const o = r[s]
-                , a = e[s]
-                , c = bE(o, a);
-            if (!c.valid)
-                return {
-                    valid: !1
-                };
-            i.push(c.data)
-        }
-        return {
-            valid: !0,
-            data: i
-        }
-    } else
-        return t === Je.date && n === Je.date && +r == +e ? {
-            valid: !0,
-            data: r
-        } : {
-            valid: !1
-        }
-}
-class Xg extends er {
-    _parse(e) {
-        const { status: t, ctx: n } = this._processInputParams(e)
-            , i = (s, o) => {
-                if (yE(s) || yE(o))
-                    return Wt;
-                const a = bE(s.value, o.value);
-                return a.valid ? ((wE(s) || wE(o)) && t.dirty(),
-                {
-                    status: t.value,
-                    value: a.data
-                }) : (tt(n, {
-                    code: $e.invalid_intersection_types
-                }),
-                    Wt)
-            }
-            ;
-        return n.common.async ? Promise.all([this._def.left._parseAsync({
-            data: n.data,
-            path: n.path,
-            parent: n
-        }), this._def.right._parseAsync({
-            data: n.data,
-            path: n.path,
-            parent: n
-        })]).then(([s, o]) => i(s, o)) : i(this._def.left._parseSync({
-            data: n.data,
-            path: n.path,
-            parent: n
-        }), this._def.right._parseSync({
-            data: n.data,
-            path: n.path,
-            parent: n
-        }))
-    }
-}
-Xg.create = (r, e, t) => new Xg({
-    left: r,
-    right: e,
-    typeName: Mt.ZodIntersection,
-    ...Kt(t)
-});
-class vc extends er {
-    _parse(e) {
-        const { status: t, ctx: n } = this._processInputParams(e);
-        if (n.parsedType !== Je.array)
-            return tt(n, {
-                code: $e.invalid_type,
-                expected: Je.array,
-                received: n.parsedType
-            }),
-                Wt;
-        if (n.data.length < this._def.items.length)
-            return tt(n, {
-                code: $e.too_small,
-                minimum: this._def.items.length,
-                inclusive: !0,
-                exact: !1,
-                type: "array"
-            }),
-                Wt;
-        !this._def.rest && n.data.length > this._def.items.length && (tt(n, {
-            code: $e.too_big,
-            maximum: this._def.items.length,
-            inclusive: !0,
-            exact: !1,
-            type: "array"
-        }),
-            t.dirty());
-        const s = [...n.data].map((o, a) => {
-            const c = this._def.items[a] || this._def.rest;
-            return c ? c._parse(new mc(n, o, n.path, a)) : null
-        }
-        ).filter(o => !!o);
-        return n.common.async ? Promise.all(s).then(o => Ki.mergeArray(t, o)) : Ki.mergeArray(t, s)
-    }
-    get items() {
-        return this._def.items
-    }
-    rest(e) {
-        return new vc({
-            ...this._def,
-            rest: e
-        })
-    }
-}
-vc.create = (r, e) => {
-    if (!Array.isArray(r))
-        throw new Error("You must pass an array of schemas to z.tuple([ ... ])");
-    return new vc({
-        items: r,
-        typeName: Mt.ZodTuple,
-        rest: null,
-        ...Kt(e)
-    })
-}
-    ;
-class e1 extends er {
-    get keySchema() {
-        return this._def.keyType
-    }
-    get valueSchema() {
-        return this._def.valueType
-    }
-    _parse(e) {
-        const { status: t, ctx: n } = this._processInputParams(e);
-        if (n.parsedType !== Je.object)
-            return tt(n, {
-                code: $e.invalid_type,
-                expected: Je.object,
-                received: n.parsedType
-            }),
-                Wt;
-        const i = []
-            , s = this._def.keyType
-            , o = this._def.valueType;
-        for (const a in n.data)
-            i.push({
-                key: s._parse(new mc(n, a, n.path, a)),
-                value: o._parse(new mc(n, n.data[a], n.path, a))
-            });
-        return n.common.async ? Ki.mergeObjectAsync(t, i) : Ki.mergeObjectSync(t, i)
-    }
-    get element() {
-        return this._def.valueType
-    }
-    static create(e, t, n) {
-        return t instanceof er ? new e1({
-            keyType: e,
-            valueType: t,
-            typeName: Mt.ZodRecord,
-            ...Kt(n)
-        }) : new e1({
-            keyType: fa.create(),
-            valueType: e,
-            typeName: Mt.ZodRecord,
-            ...Kt(t)
-        })
-    }
-}
-class tw extends er {
-    get keySchema() {
-        return this._def.keyType
-    }
-    get valueSchema() {
-        return this._def.valueType
-    }
-    _parse(e) {
-        const { status: t, ctx: n } = this._processInputParams(e);
-        if (n.parsedType !== Je.map)
-            return tt(n, {
-                code: $e.invalid_type,
-                expected: Je.map,
-                received: n.parsedType
-            }),
-                Wt;
-        const i = this._def.keyType
-            , s = this._def.valueType
-            , o = [...n.data.entries()].map(([a, c], u) => ({
-                key: i._parse(new mc(n, a, n.path, [u, "key"])),
-                value: s._parse(new mc(n, c, n.path, [u, "value"]))
-            }));
-        if (n.common.async) {
-            const a = new Map;
-            return Promise.resolve().then(async () => {
-                for (const c of o) {
-                    const u = await c.key
-                        , d = await c.value;
-                    if (u.status === "aborted" || d.status === "aborted")
-                        return Wt;
-                    (u.status === "dirty" || d.status === "dirty") && t.dirty(),
-                        a.set(u.value, d.value)
-                }
-                return {
-                    status: t.value,
-                    value: a
-                }
-            }
-            )
-        } else {
-            const a = new Map;
-            for (const c of o) {
-                const u = c.key
-                    , d = c.value;
-                if (u.status === "aborted" || d.status === "aborted")
-                    return Wt;
-                (u.status === "dirty" || d.status === "dirty") && t.dirty(),
-                    a.set(u.value, d.value)
-            }
-            return {
-                status: t.value,
-                value: a
-            }
-        }
-    }
-}
-tw.create = (r, e, t) => new tw({
-    valueType: e,
-    keyType: r,
-    typeName: Mt.ZodMap,
-    ...Kt(t)
-});
-class Gf extends er {
-    _parse(e) {
-        const { status: t, ctx: n } = this._processInputParams(e);
-        if (n.parsedType !== Je.set)
-            return tt(n, {
-                code: $e.invalid_type,
-                expected: Je.set,
-                received: n.parsedType
-            }),
-                Wt;
-        const i = this._def;
-        i.minSize !== null && n.data.size < i.minSize.value && (tt(n, {
-            code: $e.too_small,
-            minimum: i.minSize.value,
-            type: "set",
-            inclusive: !0,
-            exact: !1,
-            message: i.minSize.message
-        }),
-            t.dirty()),
-            i.maxSize !== null && n.data.size > i.maxSize.value && (tt(n, {
-                code: $e.too_big,
-                maximum: i.maxSize.value,
-                type: "set",
-                inclusive: !0,
-                exact: !1,
-                message: i.maxSize.message
-            }),
-                t.dirty());
-        const s = this._def.valueType;
-        function o(c) {
-            const u = new Set;
-            for (const d of c) {
-                if (d.status === "aborted")
-                    return Wt;
-                d.status === "dirty" && t.dirty(),
-                    u.add(d.value)
-            }
-            return {
-                status: t.value,
-                value: u
-            }
-        }
-        const a = [...n.data.values()].map((c, u) => s._parse(new mc(n, c, n.path, u)));
-        return n.common.async ? Promise.all(a).then(c => o(c)) : o(a)
-    }
-    min(e, t) {
-        return new Gf({
-            ...this._def,
-            minSize: {
-                value: e,
-                message: bt.toString(t)
-            }
-        })
-    }
-    max(e, t) {
-        return new Gf({
-            ...this._def,
-            maxSize: {
-                value: e,
-                message: bt.toString(t)
-            }
-        })
-    }
-    size(e, t) {
-        return this.min(e, t).max(e, t)
-    }
-    nonempty(e) {
-        return this.min(1, e)
-    }
-}
-Gf.create = (r, e) => new Gf({
-    valueType: r,
-    minSize: null,
-    maxSize: null,
-    typeName: Mt.ZodSet,
-    ...Kt(e)
-});
-class xd extends er {
-    constructor() {
-        super(...arguments),
-            this.validate = this.implement
-    }
-    _parse(e) {
-        const { ctx: t } = this._processInputParams(e);
-        if (t.parsedType !== Je.function)
-            return tt(t, {
-                code: $e.invalid_type,
-                expected: Je.function,
-                received: t.parsedType
-            }),
-                Wt;
-        function n(a, c) {
-            return Yy({
-                data: a,
-                path: t.path,
-                errorMaps: [t.common.contextualErrorMap, t.schemaErrorMap, Jy(), Gg].filter(u => !!u),
-                issueData: {
-                    code: $e.invalid_arguments,
-                    argumentsError: c
-                }
-            })
-        }
-        function i(a, c) {
-            return Yy({
-                data: a,
-                path: t.path,
-                errorMaps: [t.common.contextualErrorMap, t.schemaErrorMap, Jy(), Gg].filter(u => !!u),
-                issueData: {
-                    code: $e.invalid_return_type,
-                    returnTypeError: c
-                }
-            })
-        }
-        const s = {
-            errorMap: t.common.contextualErrorMap
-        }
-            , o = t.data;
-        if (this._def.returns instanceof o0) {
-            const a = this;
-            return hs(async function (...c) {
-                const u = new da([])
-                    , d = await a._def.args.parseAsync(c, s).catch(m => {
-                        throw u.addIssue(n(c, m)),
-                        u
-                    }
-                    )
-                    , f = await Reflect.apply(o, this, d);
-                return await a._def.returns._def.type.parseAsync(f, s).catch(m => {
-                    throw u.addIssue(i(f, m)),
-                    u
-                }
-                )
-            })
-        } else {
-            const a = this;
-            return hs(function (...c) {
-                const u = a._def.args.safeParse(c, s);
-                if (!u.success)
-                    throw new da([n(c, u.error)]);
-                const d = Reflect.apply(o, this, u.data)
-                    , f = a._def.returns.safeParse(d, s);
-                if (!f.success)
-                    throw new da([i(d, f.error)]);
-                return f.data
-            })
-        }
-    }
-    parameters() {
-        return this._def.args
-    }
-    returnType() {
-        return this._def.returns
-    }
-    args(...e) {
-        return new xd({
-            ...this._def,
-            args: vc.create(e).rest(Ef.create())
-        })
-    }
-    returns(e) {
-        return new xd({
-            ...this._def,
-            returns: e
-        })
-    }
-    implement(e) {
-        return this.parse(e)
-    }
-    strictImplement(e) {
-        return this.parse(e)
-    }
-    static create(e, t, n) {
-        return new xd({
-            args: e || vc.create([]).rest(Ef.create()),
-            returns: t || Ef.create(),
-            typeName: Mt.ZodFunction,
-            ...Kt(n)
-        })
-    }
-}
-class t1 extends er {
-    get schema() {
-        return this._def.getter()
-    }
-    _parse(e) {
-        const { ctx: t } = this._processInputParams(e);
-        return this._def.getter()._parse({
-            data: t.data,
-            path: t.path,
-            parent: t
-        })
-    }
-}
-t1.create = (r, e) => new t1({
-    getter: r,
-    typeName: Mt.ZodLazy,
-    ...Kt(e)
-});
-class r1 extends er {
-    _parse(e) {
-        if (e.data !== this._def.value) {
-            const t = this._getOrReturnCtx(e);
-            return tt(t, {
-                received: t.data,
-                code: $e.invalid_literal,
-                expected: this._def.value
-            }),
-                Wt
-        }
-        return {
-            status: "valid",
-            value: e.data
-        }
-    }
-    get value() {
-        return this._def.value
-    }
-}
-r1.create = (r, e) => new r1({
-    value: r,
-    typeName: Mt.ZodLiteral,
-    ...Kt(e)
-});
-function eP(r, e) {
-    return new hu({
-        values: r,
-        typeName: Mt.ZodEnum,
-        ...Kt(e)
-    })
-}
-class hu extends er {
-    _parse(e) {
-        if (typeof e.data != "string") {
-            const t = this._getOrReturnCtx(e)
-                , n = this._def.values;
-            return tt(t, {
-                expected: Dr.joinValues(n),
-                received: t.parsedType,
-                code: $e.invalid_type
-            }),
-                Wt
-        }
-        if (this._def.values.indexOf(e.data) === -1) {
-            const t = this._getOrReturnCtx(e)
-                , n = this._def.values;
-            return tt(t, {
-                received: t.data,
-                code: $e.invalid_enum_value,
-                options: n
-            }),
-                Wt
-        }
-        return hs(e.data)
-    }
-    get options() {
-        return this._def.values
-    }
-    get enum() {
-        const e = {};
-        for (const t of this._def.values)
-            e[t] = t;
-        return e
-    }
-    get Values() {
-        const e = {};
-        for (const t of this._def.values)
-            e[t] = t;
-        return e
-    }
-    get Enum() {
-        const e = {};
-        for (const t of this._def.values)
-            e[t] = t;
-        return e
-    }
-    extract(e) {
-        return hu.create(e)
-    }
-    exclude(e) {
-        return hu.create(this.options.filter(t => !e.includes(t)))
-    }
-}
-hu.create = eP;
-class n1 extends er {
-    _parse(e) {
-        const t = Dr.getValidEnumValues(this._def.values)
-            , n = this._getOrReturnCtx(e);
-        if (n.parsedType !== Je.string && n.parsedType !== Je.number) {
-            const i = Dr.objectValues(t);
-            return tt(n, {
-                expected: Dr.joinValues(i),
-                received: n.parsedType,
-                code: $e.invalid_type
-            }),
-                Wt
-        }
-        if (t.indexOf(e.data) === -1) {
-            const i = Dr.objectValues(t);
-            return tt(n, {
-                received: n.data,
-                code: $e.invalid_enum_value,
-                options: i
-            }),
-                Wt
-        }
-        return hs(e.data)
-    }
-    get enum() {
-        return this._def.values
-    }
-}
-n1.create = (r, e) => new n1({
-    values: r,
-    typeName: Mt.ZodNativeEnum,
-    ...Kt(e)
-});
-class o0 extends er {
-    unwrap() {
-        return this._def.type
-    }
-    _parse(e) {
-        const { ctx: t } = this._processInputParams(e);
-        if (t.parsedType !== Je.promise && t.common.async === !1)
-            return tt(t, {
-                code: $e.invalid_type,
-                expected: Je.promise,
-                received: t.parsedType
-            }),
-                Wt;
-        const n = t.parsedType === Je.promise ? t.data : Promise.resolve(t.data);
-        return hs(n.then(i => this._def.type.parseAsync(i, {
-            path: t.path,
-            errorMap: t.common.contextualErrorMap
-        })))
-    }
-}
-o0.create = (r, e) => new o0({
-    type: r,
-    typeName: Mt.ZodPromise,
-    ...Kt(e)
-});
-class Ea extends er {
-    innerType() {
-        return this._def.schema
-    }
-    sourceType() {
-        return this._def.schema._def.typeName === Mt.ZodEffects ? this._def.schema.sourceType() : this._def.schema
-    }
-    _parse(e) {
-        const { status: t, ctx: n } = this._processInputParams(e)
-            , i = this._def.effect || null
-            , s = {
-                addIssue: o => {
-                    tt(n, o),
-                        o.fatal ? t.abort() : t.dirty()
-                }
-                ,
-                get path() {
-                    return n.path
-                }
-            };
-        if (s.addIssue = s.addIssue.bind(s),
-            i.type === "preprocess") {
-            const o = i.transform(n.data, s);
-            return n.common.issues.length ? {
-                status: "dirty",
-                value: n.data
-            } : n.common.async ? Promise.resolve(o).then(a => this._def.schema._parseAsync({
-                data: a,
-                path: n.path,
-                parent: n
-            })) : this._def.schema._parseSync({
-                data: o,
-                path: n.path,
-                parent: n
-            })
-        }
-        if (i.type === "refinement") {
-            const o = a => {
-                const c = i.refinement(a, s);
-                if (n.common.async)
-                    return Promise.resolve(c);
-                if (c instanceof Promise)
-                    throw new Error("Async refinement encountered during synchronous parse operation. Use .parseAsync instead.");
-                return a
-            }
-                ;
-            if (n.common.async === !1) {
-                const a = this._def.schema._parseSync({
-                    data: n.data,
-                    path: n.path,
-                    parent: n
-                });
-                return a.status === "aborted" ? Wt : (a.status === "dirty" && t.dirty(),
-                    o(a.value),
-                {
-                    status: t.value,
-                    value: a.value
-                })
-            } else
-                return this._def.schema._parseAsync({
-                    data: n.data,
-                    path: n.path,
-                    parent: n
-                }).then(a => a.status === "aborted" ? Wt : (a.status === "dirty" && t.dirty(),
-                    o(a.value).then(() => ({
-                        status: t.value,
-                        value: a.value
-                    }))))
-        }
-        if (i.type === "transform")
-            if (n.common.async === !1) {
-                const o = this._def.schema._parseSync({
-                    data: n.data,
-                    path: n.path,
-                    parent: n
-                });
-                if (!Kg(o))
-                    return o;
-                const a = i.transform(o.value, s);
-                if (a instanceof Promise)
-                    throw new Error("Asynchronous transform encountered during synchronous parse operation. Use .parseAsync instead.");
-                return {
-                    status: t.value,
-                    value: a
-                }
-            } else
-                return this._def.schema._parseAsync({
-                    data: n.data,
-                    path: n.path,
-                    parent: n
-                }).then(o => Kg(o) ? Promise.resolve(i.transform(o.value, s)).then(a => ({
-                    status: t.value,
-                    value: a
-                })) : o);
-        Dr.assertNever(i)
-    }
-}
-Ea.create = (r, e, t) => new Ea({
-    schema: r,
-    typeName: Mt.ZodEffects,
-    effect: e,
-    ...Kt(t)
-});
-Ea.createWithPreprocess = (r, e, t) => new Ea({
-    schema: e,
-    effect: {
-        type: "preprocess",
-        transform: r
-    },
-    typeName: Mt.ZodEffects,
-    ...Kt(t)
-});
-class il extends er {
-    _parse(e) {
-        return this._getType(e) === Je.undefined ? hs(void 0) : this._def.innerType._parse(e)
-    }
-    unwrap() {
-        return this._def.innerType
-    }
-}
-il.create = (r, e) => new il({
-    innerType: r,
-    typeName: Mt.ZodOptional,
-    ...Kt(e)
-});
-class Kf extends er {
-    _parse(e) {
-        return this._getType(e) === Je.null ? hs(null) : this._def.innerType._parse(e)
-    }
-    unwrap() {
-        return this._def.innerType
-    }
-}
-Kf.create = (r, e) => new Kf({
-    innerType: r,
-    typeName: Mt.ZodNullable,
-    ...Kt(e)
-});
-class i1 extends er {
-    _parse(e) {
-        const { ctx: t } = this._processInputParams(e);
-        let n = t.data;
-        return t.parsedType === Je.undefined && (n = this._def.defaultValue()),
-            this._def.innerType._parse({
-                data: n,
-                path: t.path,
-                parent: t
-            })
-    }
-    removeDefault() {
-        return this._def.innerType
-    }
-}
-i1.create = (r, e) => new i1({
-    innerType: r,
-    typeName: Mt.ZodDefault,
-    defaultValue: typeof e.default == "function" ? e.default : () => e.default,
-    ...Kt(e)
-});
-class rw extends er {
-    _parse(e) {
-        const { ctx: t } = this._processInputParams(e)
-            , n = {
-                ...t,
-                common: {
-                    ...t.common,
-                    issues: []
-                }
-            }
-            , i = this._def.innerType._parse({
-                data: n.data,
-                path: n.path,
-                parent: {
-                    ...n
-                }
-            });
-        return Qy(i) ? i.then(s => ({
-            status: "valid",
-            value: s.status === "valid" ? s.value : this._def.catchValue({
-                get error() {
-                    return new da(n.common.issues)
-                },
-                input: n.data
-            })
-        })) : {
-            status: "valid",
-            value: i.status === "valid" ? i.value : this._def.catchValue({
-                get error() {
-                    return new da(n.common.issues)
-                },
-                input: n.data
-            })
-        }
-    }
-    removeCatch() {
-        return this._def.innerType
-    }
-}
-rw.create = (r, e) => new rw({
-    innerType: r,
-    typeName: Mt.ZodCatch,
-    catchValue: typeof e.catch == "function" ? e.catch : () => e.catch,
-    ...Kt(e)
-});
-class nw extends er {
-    _parse(e) {
-        if (this._getType(e) !== Je.nan) {
-            const n = this._getOrReturnCtx(e);
-            return tt(n, {
-                code: $e.invalid_type,
-                expected: Je.nan,
-                received: n.parsedType
-            }),
-                Wt
-        }
-        return {
-            status: "valid",
-            value: e.data
-        }
-    }
-}
-nw.create = r => new nw({
-    typeName: Mt.ZodNaN,
-    ...Kt(r)
-});
-const Iee = Symbol("zod_brand");
-class tP extends er {
-    _parse(e) {
-        const { ctx: t } = this._processInputParams(e)
-            , n = t.data;
-        return this._def.type._parse({
-            data: n,
-            path: t.path,
-            parent: t
-        })
-    }
-    unwrap() {
-        return this._def.type
-    }
-}
-class k1 extends er {
-    _parse(e) {
-        const { status: t, ctx: n } = this._processInputParams(e);
-        if (n.common.async)
-            return (async () => {
-                const s = await this._def.in._parseAsync({
-                    data: n.data,
-                    path: n.path,
-                    parent: n
-                });
-                return s.status === "aborted" ? Wt : s.status === "dirty" ? (t.dirty(),
-                    XO(s.value)) : this._def.out._parseAsync({
-                        data: s.value,
-                        path: n.path,
-                        parent: n
-                    })
-            }
-            )();
-        {
-            const i = this._def.in._parseSync({
-                data: n.data,
-                path: n.path,
-                parent: n
-            });
-            return i.status === "aborted" ? Wt : i.status === "dirty" ? (t.dirty(),
-            {
-                status: "dirty",
-                value: i.value
-            }) : this._def.out._parseSync({
-                data: i.value,
-                path: n.path,
-                parent: n
-            })
-        }
-    }
-    static create(e, t) {
-        return new k1({
-            in: e,
-            out: t,
-            typeName: Mt.ZodPipeline
-        })
-    }
-}
-class iw extends er {
-    _parse(e) {
-        const t = this._def.innerType._parse(e);
-        return Kg(t) && (t.value = Object.freeze(t.value)),
-            t
-    }
-}
-iw.create = (r, e) => new iw({
-    innerType: r,
-    typeName: Mt.ZodReadonly,
-    ...Kt(e)
-});
-const rP = (r, e = {}, t) => r ? s0.create().superRefine((n, i) => {
-    var s, o;
-    if (!r(n)) {
-        const a = typeof e == "function" ? e(n) : typeof e == "string" ? {
-            message: e
-        } : e
-            , c = (o = (s = a.fatal) !== null && s !== void 0 ? s : t) !== null && o !== void 0 ? o : !0
-            , u = typeof a == "string" ? {
-                message: a
-            } : a;
-        i.addIssue({
-            code: "custom",
-            ...u,
-            fatal: c
-        })
-    }
-}
-) : s0.create()
-    , Tee = {
-        object: yn.lazycreate
-    };
-var Mt;
-(function (r) {
-    r.ZodString = "ZodString",
-        r.ZodNumber = "ZodNumber",
-        r.ZodNaN = "ZodNaN",
-        r.ZodBigInt = "ZodBigInt",
-        r.ZodBoolean = "ZodBoolean",
-        r.ZodDate = "ZodDate",
-        r.ZodSymbol = "ZodSymbol",
-        r.ZodUndefined = "ZodUndefined",
-        r.ZodNull = "ZodNull",
-        r.ZodAny = "ZodAny",
-        r.ZodUnknown = "ZodUnknown",
-        r.ZodNever = "ZodNever",
-        r.ZodVoid = "ZodVoid",
-        r.ZodArray = "ZodArray",
-        r.ZodObject = "ZodObject",
-        r.ZodUnion = "ZodUnion",
-        r.ZodDiscriminatedUnion = "ZodDiscriminatedUnion",
-        r.ZodIntersection = "ZodIntersection",
-        r.ZodTuple = "ZodTuple",
-        r.ZodRecord = "ZodRecord",
-        r.ZodMap = "ZodMap",
-        r.ZodSet = "ZodSet",
-        r.ZodFunction = "ZodFunction",
-        r.ZodLazy = "ZodLazy",
-        r.ZodLiteral = "ZodLiteral",
-        r.ZodEnum = "ZodEnum",
-        r.ZodEffects = "ZodEffects",
-        r.ZodNativeEnum = "ZodNativeEnum",
-        r.ZodOptional = "ZodOptional",
-        r.ZodNullable = "ZodNullable",
-        r.ZodDefault = "ZodDefault",
-        r.ZodCatch = "ZodCatch",
-        r.ZodPromise = "ZodPromise",
-        r.ZodBranded = "ZodBranded",
-        r.ZodPipeline = "ZodPipeline",
-        r.ZodReadonly = "ZodReadonly"
-}
-)(Mt || (Mt = {}));
-const Ree = (r, e = {
-    message: `Input not instance of ${r.name}`
-}) => rP(t => t instanceof r, e)
-    , nP = fa.create
-    , iP = uu.create
-    , Nee = nw.create
-    , Oee = fu.create
-    , sP = Zg.create
-    , Pee = qf.create
-    , kee = Xy.create
-    , Mee = Jg.create
-    , $ee = Yg.create
-    , Dee = s0.create
-    , Lee = Ef.create
-    , Bee = fl.create
-    , jee = ew.create
-    , Uee = pa.create
-    , Fee = yn.create
-    , Wee = yn.strictCreate
-    , Hee = Qg.create
-    , zee = lb.create
-    , Vee = Xg.create
-    , qee = vc.create
-    , Gee = e1.create
-    , Kee = tw.create
-    , Zee = Gf.create
-    , Jee = xd.create
-    , Yee = t1.create
-    , Qee = r1.create
-    , Xee = hu.create
-    , ete = n1.create
-    , tte = o0.create
-    , WC = Ea.create
-    , rte = il.create
-    , nte = Kf.create
-    , ite = Ea.createWithPreprocess
-    , ste = k1.create
-    , ote = () => nP().optional()
-    , ate = () => iP().optional()
-    , cte = () => sP().optional()
-    , lte = {
-        string: r => fa.create({
-            ...r,
-            coerce: !0
-        }),
-        number: r => uu.create({
-            ...r,
-            coerce: !0
-        }),
-        boolean: r => Zg.create({
-            ...r,
-            coerce: !0
-        }),
-        bigint: r => fu.create({
-            ...r,
-            coerce: !0
-        }),
-        date: r => qf.create({
-            ...r,
-            coerce: !0
-        })
-    }
-    , ute = Wt;
-var we = Object.freeze({
-    __proto__: null,
-    defaultErrorMap: Gg,
-    setErrorMap: pee,
-    getErrorMap: Jy,
-    makeIssue: Yy,
-    EMPTY_PATH: gee,
-    addIssueToContext: tt,
-    ParseStatus: Ki,
-    INVALID: Wt,
-    DIRTY: XO,
-    OK: hs,
-    isAborted: yE,
-    isDirty: wE,
-    isValid: Kg,
-    isAsync: Qy,
-    get util() {
-        return Dr
-    },
-    get objectUtil() {
-        return vE
-    },
-    ZodParsedType: Je,
-    getParsedType: Gl,
-    ZodType: er,
-    ZodString: fa,
-    ZodNumber: uu,
-    ZodBigInt: fu,
-    ZodBoolean: Zg,
-    ZodDate: qf,
-    ZodSymbol: Xy,
-    ZodUndefined: Jg,
-    ZodNull: Yg,
-    ZodAny: s0,
-    ZodUnknown: Ef,
-    ZodNever: fl,
-    ZodVoid: ew,
-    ZodArray: pa,
-    ZodObject: yn,
-    ZodUnion: Qg,
-    ZodDiscriminatedUnion: lb,
-    ZodIntersection: Xg,
-    ZodTuple: vc,
-    ZodRecord: e1,
-    ZodMap: tw,
-    ZodSet: Gf,
-    ZodFunction: xd,
-    ZodLazy: t1,
-    ZodLiteral: r1,
-    ZodEnum: hu,
-    ZodNativeEnum: n1,
-    ZodPromise: o0,
-    ZodEffects: Ea,
-    ZodTransformer: Ea,
-    ZodOptional: il,
-    ZodNullable: Kf,
-    ZodDefault: i1,
-    ZodCatch: rw,
-    ZodNaN: nw,
-    BRAND: Iee,
-    ZodBranded: tP,
-    ZodPipeline: k1,
-    ZodReadonly: iw,
-    custom: rP,
-    Schema: er,
-    ZodSchema: er,
-    late: Tee,
-    get ZodFirstPartyTypeKind() {
-        return Mt
-    },
-    coerce: lte,
-    any: Dee,
-    array: Uee,
-    bigint: Oee,
-    boolean: sP,
-    date: Pee,
-    discriminatedUnion: zee,
-    effect: WC,
-    enum: Xee,
-    function: Jee,
-    instanceof: Ree,
-    intersection: Vee,
-    lazy: Yee,
-    literal: Qee,
-    map: Kee,
-    nan: Nee,
-    nativeEnum: ete,
-    never: Bee,
-    null: $ee,
-    nullable: nte,
-    number: iP,
-    object: Fee,
-    oboolean: cte,
-    onumber: ate,
-    optional: rte,
-    ostring: ote,
-    pipeline: ste,
-    preprocess: ite,
-    promise: tte,
-    record: Gee,
-    set: Zee,
-    strictObject: Wee,
-    string: nP,
-    symbol: kee,
-    transformer: WC,
-    tuple: qee,
-    undefined: Mee,
-    union: Hee,
-    unknown: Lee,
-    void: jee,
-    NEVER: ute,
-    ZodIssueCode: $e,
-    quotelessJson: dee,
-    ZodError: da
-});
-const Vs = we.object({
-    message: we.string()
-});
-function Qt(r) {
-    return we.literal(Ed[r])
-}
-we.object({
-    accessList: we.array(we.string()),
-    blockHash: we.string().nullable(),
-    blockNumber: we.string().nullable(),
-    chainId: we.string(),
-    from: we.string(),
-    gas: we.string(),
-    hash: we.string(),
-    input: we.string().nullable(),
-    maxFeePerGas: we.string(),
-    maxPriorityFeePerGas: we.string(),
-    nonce: we.string(),
-    r: we.string(),
-    s: we.string(),
-    to: we.string(),
-    transactionIndex: we.string().nullable(),
-    type: we.string(),
-    v: we.string(),
-    value: we.string()
-});
-const fte = we.object({
-    chainId: we.number()
-})
-    , hte = we.object({
-        email: we.string().email()
-    })
-    , dte = we.object({
-        otp: we.string()
-    })
-    , pte = we.object({
-        chainId: we.optional(we.number())
-    })
-    , gte = we.object({
-        email: we.string().email()
-    })
-    , mte = we.object({
-        themeMode: we.optional(we.enum(["light", "dark"])),
-        themeVariables: we.optional(we.record(we.string(), we.string().or(we.number())))
-    })
-    , vte = we.object({
-        metadata: we.object({
-            name: we.string(),
-            description: we.string(),
-            url: we.string(),
-            icons: we.array(we.string())
-        }).optional(),
-        sdkVersion: we.string(),
-        projectId: we.string()
-    })
-    , yte = we.object({
-        action: we.enum(["VERIFY_DEVICE", "VERIFY_OTP"])
-    })
-    , wte = we.object({
-        email: we.string().email(),
-        address: we.string(),
-        chainId: we.number()
-    })
-    , bte = we.object({
-        isConnected: we.boolean()
-    })
-    , _te = we.object({
-        chainId: we.number()
-    })
-    , Ete = we.object({
-        chainId: we.number()
-    })
-    , xte = we.object({
-        email: we.string().email()
-    })
-    , Ste = we.any()
-    , Ate = we.object({
-        method: we.literal("personal_sign"),
-        params: we.array(we.any())
-    })
-    , Cte = we.object({
-        method: we.literal("eth_sendTransaction"),
-        params: we.array(we.any())
-    })
-    , Ite = we.object({
-        method: we.literal("eth_accounts")
-    })
-    , Tte = we.object({
-        method: we.literal("eth_getBalance"),
-        params: we.array(we.any())
-    })
-    , Rte = we.object({
-        method: we.literal("eth_estimateGas"),
-        params: we.array(we.any())
-    })
-    , Nte = we.object({
-        method: we.literal("eth_gasPrice")
-    })
-    , Ote = we.object({
-        method: we.literal("eth_signTypedData_v4"),
-        params: we.array(we.any())
-    })
-    , Pte = we.object({
-        method: we.literal("eth_getTransactionByHash"),
-        params: we.array(we.any())
-    })
-    , kte = we.object({
-        method: we.literal("eth_blockNumber")
-    })
-    , Mte = we.object({
-        method: we.literal("eth_chainId")
-    })
-    , HC = we.object({
-        token: we.string()
-    });
-we.object({
-    type: Qt("APP_SWITCH_NETWORK"),
-    payload: fte
-}).or(we.object({
-    type: Qt("APP_CONNECT_EMAIL"),
-    payload: hte
-})).or(we.object({
-    type: Qt("APP_CONNECT_DEVICE")
-})).or(we.object({
-    type: Qt("APP_CONNECT_OTP"),
-    payload: dte
-})).or(we.object({
-    type: Qt("APP_GET_USER"),
-    payload: we.optional(pte)
-})).or(we.object({
-    type: Qt("APP_SIGN_OUT")
-})).or(we.object({
-    type: Qt("APP_IS_CONNECTED"),
-    payload: we.optional(HC)
-})).or(we.object({
-    type: Qt("APP_GET_CHAIN_ID")
-})).or(we.object({
-    type: Qt("APP_RPC_REQUEST"),
-    payload: Ate.or(Cte).or(Ite).or(Tte).or(Rte).or(Nte).or(Ote).or(kte).or(Mte).or(Pte)
-})).or(we.object({
-    type: Qt("APP_UPDATE_EMAIL"),
-    payload: gte
-})).or(we.object({
-    type: Qt("APP_AWAIT_UPDATE_EMAIL")
-})).or(we.object({
-    type: Qt("APP_SYNC_THEME"),
-    payload: mte
-})).or(we.object({
-    type: Qt("APP_SYNC_DAPP_DATA"),
-    payload: vte
-})),
-    we.object({
-        type: Qt("FRAME_SWITCH_NETWORK_ERROR"),
-        payload: Vs
-    }).or(we.object({
-        type: Qt("FRAME_SWITCH_NETWORK_SUCCESS"),
-        payload: Ete
-    })).or(we.object({
-        type: Qt("FRAME_CONNECT_EMAIL_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_CONNECT_EMAIL_SUCCESS"),
-        payload: yte
-    })).or(we.object({
-        type: Qt("FRAME_CONNECT_OTP_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_CONNECT_OTP_SUCCESS")
-    })).or(we.object({
-        type: Qt("FRAME_CONNECT_DEVICE_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_CONNECT_DEVICE_SUCCESS")
-    })).or(we.object({
-        type: Qt("FRAME_GET_USER_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_GET_USER_SUCCESS"),
-        payload: wte
-    })).or(we.object({
-        type: Qt("FRAME_SIGN_OUT_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_SIGN_OUT_SUCCESS")
-    })).or(we.object({
-        type: Qt("FRAME_IS_CONNECTED_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_IS_CONNECTED_SUCCESS"),
-        payload: bte
-    })).or(we.object({
-        type: Qt("FRAME_GET_CHAIN_ID_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_GET_CHAIN_ID_SUCCESS"),
-        payload: _te
-    })).or(we.object({
-        type: Qt("FRAME_RPC_REQUEST_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_RPC_REQUEST_SUCCESS"),
-        payload: Ste
-    })).or(we.object({
-        type: Qt("FRAME_SESSION_UPDATE"),
-        payload: HC
-    })).or(we.object({
-        type: Qt("FRAME_UPDATE_EMAIL_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_UPDATE_EMAIL_SUCCESS")
-    })).or(we.object({
-        type: Qt("FRAME_AWAIT_UPDATE_EMAIL_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_AWAIT_UPDATE_EMAIL_SUCCESS"),
-        payload: xte
-    })).or(we.object({
-        type: Qt("FRAME_SYNC_THEME_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_SYNC_THEME_SUCCESS")
-    })).or(we.object({
-        type: Qt("FRAME_SYNC_DAPP_DATA_ERROR"),
-        payload: Vs
-    })).or(we.object({
-        type: Qt("FRAME_SYNC_DAPP_DATA_SUCCESS")
-    }));
-const zC = {
-    set(r, e) {
-        localStorage.setItem(`${Ed.STORAGE_KEY}${r}`, e)
-    },
-    get(r) {
-        return localStorage.getItem(`${Ed.STORAGE_KEY}${r}`)
-    },
-    delete(r) {
-        localStorage.removeItem(`${Ed.STORAGE_KEY}${r}`)
-    }
-}
-    , $te = ["ASIA/SHANGHAI", "ASIA/URUMQI", "ASIA/CHONGQING", "ASIA/HARBIN", "ASIA/KASHGAR", "ASIA/MACAU", "ASIA/HONG_KONG", "ASIA/MACAO", "ASIA/BEIJING", "ASIA/HARBIN"]
-    , Iv = 30 * 1e3
-    , T3 = {
-        getBlockchainApiUrl() {
-            try {
-                const { timeZone: r } = new Intl.DateTimeFormat().resolvedOptions()
-                    , e = r.toUpperCase();
-                return $te.includes(e) ? "https://rpc.walletconnect.org" : "https://rpc.walletconnect.com"
-            } catch {
-                return !1
-            }
-        },
-        checkIfAllowedToTriggerEmail() {
-            const r = zC.get(Ed.LAST_EMAIL_LOGIN_TIME);
-            if (r) {
-                const e = Date.now() - Number(r);
-                if (e < Iv) {
-                    const t = Math.ceil((Iv - e) / 1e3);
-                    throw new Error(`Please try again after ${t} seconds`)
-                }
-            }
-        },
-        getTimeToNextEmailLogin() {
-            const r = zC.get(Ed.LAST_EMAIL_LOGIN_TIME);
-            if (r) {
-                const e = Date.now() - Number(r);
-                if (e < Iv)
-                    return Math.ceil((Iv - e) / 1e3)
-            }
-            return 0
-        }
-    };
-var ub = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-const Dte = 6;
-let a0 = class extends Xt {
-    constructor() {
-        var e;
-        super(...arguments),
-            this.email = (e = at.state.data) == null ? void 0 : e.email,
-            this.emailConnector = Xr.getEmailConnector(),
-            this.loading = !1,
-            this.timeoutTimeLeft = T3.getTimeToNextEmailLogin(),
-            this.error = "",
-            this.otp = ""
-    }
-    firstUpdated() {
-        this.startOTPTimeout()
-    }
-    disconnectedCallback() {
-        clearTimeout(this.OTPTimeout)
-    }
-    render() {
-        if (!this.email)
-            throw new Error("w3m-email-verify-otp-view: No email provided");
-        const e = !!this.timeoutTimeLeft;
-        return Ee`
-      <wui-flex
-        flexDirection="column"
-        alignItems="center"
-        .padding=${["l", "0", "l", "0"]}
-        gap="l"
-      >
-        <wui-flex flexDirection="column" alignItems="center">
-          <wui-text variant="paragraph-400" color="fg-100"> Enter the code we sent to </wui-text>
-          <wui-text variant="paragraph-500" color="fg-100">${this.email}</wui-text>
-        </wui-flex>
+//           <wui-text variant="small-400" color="fg-200" align="center">
+//             You will receive an approval request on your former mail to confirm the new one
+//           </wui-text>
 
-        <wui-text variant="small-400" color="fg-200">The code expires in 20 minutes</wui-text>
+//           <wui-flex alignItems="center" id="w3m-resend-section">
+//             <wui-text variant="small-400" color="fg-100" align="center">
+//               Didn't receive it?
+//             </wui-text>
+//             <wui-link @click=${this.onResendCode.bind(this)} .disabled=${this.loading}>
+//               Resend email
+//             </wui-link>
+//           </wui-flex>
+//         </wui-flex>
+//       </wui-flex>
+//     `
+//     }
+//     async listenForEmailUpdateApproval() {
+//         this.emailConnector && (await this.emailConnector.provider.awaitUpdateEmail(),
+//             at.replace("Account"),
+//             Rn.showSuccess("Email updated"))
+//     }
+//     async onResendCode() {
+//         try {
+//             if (!this.loading) {
+//                 if (!this.emailConnector || !this.email)
+//                     throw new Error("w3m-update-email-wallet-waiting-view: Unable to resend email");
+//                 this.loading = !0,
+//                     await this.emailConnector.provider.updateEmail({
+//                         email: this.email
+//                     }),
+//                     this.listenForEmailUpdateApproval(),
+//                     Rn.showSuccess("Code email resent")
+//             }
+//         } catch (e) {
+//             Rn.showError(e)
+//         } finally {
+//             this.loading = !1
+//         }
+//     }
+// }
+//     ;
+// cw.styles = Jte;
+// fP([it()], cw.prototype, "loading", void 0);
+// cw = fP([Pe("w3m-update-email-wallet-waiting-view")], cw);
+// const Yte = fn`
+//   wui-grid {
+//     max-height: clamp(360px, 400px, 80vh);
+//     overflow: scroll;
+//     scrollbar-width: none;
+//     grid-auto-rows: min-content;
+//     grid-template-columns: repeat(auto-fill, 76px);
+//   }
 
-        ${this.loading ? Ee`<wui-loading-spinner size="xl" color="accent-100"></wui-loading-spinner>` : Ee` <wui-flex flexDirection="column" alignItems="center" gap="xs">
-              <wui-otp
-                dissabled
-                length="6"
-                @inputChange=${this.onOtpInputChange.bind(this)}
-                .otp=${this.otp}
-              ></wui-otp>
-              ${this.error ? Ee`<wui-text variant="small-400" color="error-100"
-                    >${this.error}. Try Again</wui-text
-                  >` : null}
-            </wui-flex>`}
+//   @media (max-width: 435px) {
+//     wui-grid {
+//       grid-template-columns: repeat(auto-fill, 77px);
+//     }
+//   }
 
-        <wui-flex alignItems="center">
-          <wui-text variant="small-400" color="fg-200">Didn't receive it?</wui-text>
-          <wui-link @click=${this.onResendCode.bind(this)} .disabled=${e}>
-            Resend ${e ? `in ${this.timeoutTimeLeft}s` : "Code"}
-          </wui-link>
-        </wui-flex>
-      </wui-flex>
-    `
-    }
-    startOTPTimeout() {
-        this.timeoutTimeLeft = T3.getTimeToNextEmailLogin(),
-            this.OTPTimeout = setInterval(() => {
-                this.timeoutTimeLeft > 0 ? this.timeoutTimeLeft = T3.getTimeToNextEmailLogin() : clearInterval(this.OTPTimeout)
-            }
-                , 1e3)
-    }
-    async onOtpInputChange(e) {
-        try {
-            this.loading || (this.otp = e.detail,
-                this.emailConnector && this.otp.length === Dte && (this.loading = !0,
-                    await this.emailConnector.provider.connectOtp({
-                        otp: this.otp
-                    }),
-                    Ft.sendEvent({
-                        type: "track",
-                        event: "EMAIL_VERIFICATION_CODE_PASS"
-                    }),
-                    await wr.connectExternal(this.emailConnector),
-                    en.close(),
-                    Ft.sendEvent({
-                        type: "track",
-                        event: "CONNECT_SUCCESS",
-                        properties: {
-                            method: "email"
-                        }
-                    })))
-        } catch (t) {
-            Ft.sendEvent({
-                type: "track",
-                event: "EMAIL_VERIFICATION_CODE_FAIL"
-            }),
-                this.error = vt.parseError(t),
-                this.loading = !1
-        }
-    }
-    async onResendCode() {
-        try {
-            if (!this.loading && !this.timeoutTimeLeft) {
-                this.error = "",
-                    this.otp = "";
-                const e = Xr.getEmailConnector();
-                if (!e || !this.email)
-                    throw new Error("w3m-email-login-widget: Unable to resend email");
-                this.loading = !0,
-                    await e.provider.connectEmail({
-                        email: this.email
-                    }),
-                    Ft.sendEvent({
-                        type: "track",
-                        event: "EMAIL_VERIFICATION_CODE_SENT"
-                    }),
-                    this.startOTPTimeout(),
-                    Rn.showSuccess("Code email resent")
-            }
-        } catch (e) {
-            Rn.showError(e)
-        } finally {
-            this.loading = !1
-        }
-    }
-}
-    ;
-a0.styles = hee;
-ub([it()], a0.prototype, "loading", void 0);
-ub([it()], a0.prototype, "timeoutTimeLeft", void 0);
-ub([it()], a0.prototype, "error", void 0);
-a0 = ub([Pe("w3m-email-verify-otp-view")], a0);
-const Lte = fn`
-  wui-icon-box {
-    height: var(--wui-icon-box-size-xl);
-    width: var(--wui-icon-box-size-xl);
-  }
-`;
-var oP = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let sw = class extends Xt {
-    constructor() {
-        var e;
-        super(),
-            this.email = (e = at.state.data) == null ? void 0 : e.email,
-            this.emailConnector = Xr.getEmailConnector(),
-            this.loading = !1,
-            this.listenForDeviceApproval()
-    }
-    render() {
-        if (!this.email)
-            throw new Error("w3m-email-verify-device-view: No email provided");
-        if (!this.emailConnector)
-            throw new Error("w3m-email-verify-device-view: No email connector provided");
-        return Ee`
-      <wui-flex
-        flexDirection="column"
-        alignItems="center"
-        .padding=${["xxl", "s", "xxl", "s"]}
-        gap="l"
-      >
-        <wui-icon-box
-          size="xl"
-          iconcolor="accent-100"
-          backgroundcolor="accent-100"
-          icon="verify"
-          background="opaque"
-        ></wui-icon-box>
+//   wui-grid[data-scroll='false'] {
+//     overflow: hidden;
+//   }
 
-        <wui-flex flexDirection="column" alignItems="center" gap="s">
-          <wui-flex flexDirection="column" alignItems="center">
-            <wui-text variant="paragraph-400" color="fg-100">
-              Approve the login link we sent to
-            </wui-text>
-            <wui-text variant="paragraph-400" color="fg-100"><b>${this.email}</b></wui-text>
-          </wui-flex>
+//   wui-grid::-webkit-scrollbar {
+//     display: none;
+//   }
 
-          <wui-text variant="small-400" color="fg-200" align="center">
-            The code expires in 20 minutes
-          </wui-text>
+//   wui-loading-spinner {
+//     padding-top: var(--wui-spacing-l);
+//     padding-bottom: var(--wui-spacing-l);
+//     justify-content: center;
+//     grid-column: 1 / span 4;
+//   }
+// `;
+// function hP(r) {
+//     const { connectors: e } = Xr.state
+//         , t = e.filter(s => s.type === "ANNOUNCED").reduce((s, o) => {
+//             var a;
+//             return (a = o.info) != null && a.rdns && (s[o.info.rdns] = !0),
+//                 s
+//         }
+//             , {});
+//     return r.map(s => ({
+//         ...s,
+//         installed: !!s.rdns && !!t[s.rdns ?? ""]
+//     })).sort((s, o) => Number(o.installed) - Number(s.installed))
+// }
+// var M1 = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// const qC = "local-paginator";
+// let Zf = class extends Xt {
+//     constructor() {
+//         super(),
+//             this.unsubscribe = [],
+//             this.paginationObserver = void 0,
+//             this.initial = !lr.state.wallets.length,
+//             this.wallets = lr.state.wallets,
+//             this.recommended = lr.state.recommended,
+//             this.featured = lr.state.featured,
+//             this.unsubscribe.push(lr.subscribeKey("wallets", e => this.wallets = e), lr.subscribeKey("recommended", e => this.recommended = e), lr.subscribeKey("featured", e => this.featured = e))
+//     }
+//     firstUpdated() {
+//         this.initialFetch(),
+//             this.createPaginationObserver()
+//     }
+//     disconnectedCallback() {
+//         var e;
+//         this.unsubscribe.forEach(t => t()),
+//             (e = this.paginationObserver) == null || e.disconnect()
+//     }
+//     render() {
+//         return Ee`
+//       <wui-grid
+//         data-scroll=${!this.initial}
+//         .padding=${["0", "s", "s", "s"]}
+//         columnGap="xxs"
+//         rowGap="l"
+//         justifyContent="space-between"
+//       >
+//         ${this.initial ? this.shimmerTemplate(16) : this.walletsTemplate()}
+//         ${this.paginationLoaderTemplate()}
+//       </wui-grid>
+//     `
+//     }
+//     async initialFetch() {
+//         var t;
+//         const e = (t = this.shadowRoot) == null ? void 0 : t.querySelector("wui-grid");
+//         this.initial && e && (await lr.fetchWallets({
+//             page: 1
+//         }),
+//             await e.animate([{
+//                 opacity: 1
+//             }, {
+//                 opacity: 0
+//             }], {
+//                 duration: 200,
+//                 fill: "forwards",
+//                 easing: "ease"
+//             }).finished,
+//             this.initial = !1,
+//             e.animate([{
+//                 opacity: 0
+//             }, {
+//                 opacity: 1
+//             }], {
+//                 duration: 200,
+//                 fill: "forwards",
+//                 easing: "ease"
+//             }))
+//     }
+//     shimmerTemplate(e, t) {
+//         return [...Array(e)].map(() => Ee`
+//         <wui-card-select-loader type="wallet" id=${kr(t)}></wui-card-select-loader>
+//       `)
+//     }
+//     walletsTemplate() {
+//         const e = [...this.featured, ...this.recommended, ...this.wallets];
+//         return hP(e).map(n => Ee`
+//         <wui-card-select
+//           imageSrc=${kr(Cn.getWalletImage(n))}
+//           type="wallet"
+//           name=${n.name}
+//           @click=${() => this.onConnectWallet(n)}
+//           .installed=${n.installed}
+//         ></wui-card-select>
+//       `)
+//     }
+//     paginationLoaderTemplate() {
+//         const { wallets: e, recommended: t, featured: n, count: i } = lr.state
+//             , s = window.innerWidth < 352 ? 3 : 4
+//             , o = e.length + t.length;
+//         let c = Math.ceil(o / s) * s - o + s;
+//         return c -= e.length ? n.length % s : 0,
+//             i === 0 && n.length > 0 ? null : i === 0 || [...n, ...e, ...t].length < i ? this.shimmerTemplate(c, qC) : null
+//     }
+//     createPaginationObserver() {
+//         var t;
+//         const e = (t = this.shadowRoot) == null ? void 0 : t.querySelector(`#${qC}`);
+//         e && (this.paginationObserver = new IntersectionObserver(([n]) => {
+//             if (n != null && n.isIntersecting && !this.initial) {
+//                 const { page: i, count: s, wallets: o } = lr.state;
+//                 o.length < s && lr.fetchWallets({
+//                     page: i + 1
+//                 })
+//             }
+//         }
+//         ),
+//             this.paginationObserver.observe(e))
+//     }
+//     onConnectWallet(e) {
+//         const { connectors: t } = Xr.state
+//             , n = t.find(({ explorerId: i }) => i === e.id);
+//         n ? at.push("ConnectingExternal", {
+//             connector: n
+//         }) : at.push("ConnectingWalletConnect", {
+//             wallet: e
+//         })
+//     }
+// }
+//     ;
+// Zf.styles = Yte;
+// M1([it()], Zf.prototype, "initial", void 0);
+// M1([it()], Zf.prototype, "wallets", void 0);
+// M1([it()], Zf.prototype, "recommended", void 0);
+// M1([it()], Zf.prototype, "featured", void 0);
+// Zf = M1([Pe("w3m-all-wallets-list")], Zf);
+// const Qte = fn`
+//   wui-grid,
+//   wui-loading-spinner,
+//   wui-flex {
+//     height: 360px;
+//   }
 
-          <wui-flex alignItems="center" id="w3m-resend-section">
-            <wui-text variant="small-400" color="fg-100" align="center">
-              Didn't receive it?
-            </wui-text>
-            <wui-link @click=${this.onResendCode.bind(this)} .disabled=${this.loading}>
-              Resend email
-            </wui-link>
-          </wui-flex>
-        </wui-flex>
-      </wui-flex>
-    `
-    }
-    async listenForDeviceApproval() {
-        this.emailConnector && (await this.emailConnector.provider.connectDevice(),
-            Ft.sendEvent({
-                type: "track",
-                event: "DEVICE_REGISTERED_FOR_EMAIL"
-            }),
-            Ft.sendEvent({
-                type: "track",
-                event: "EMAIL_VERIFICATION_CODE_SENT"
-            }),
-            at.replace("EmailVerifyOtp", {
-                email: this.email
-            }))
-    }
-    async onResendCode() {
-        try {
-            if (!this.loading) {
-                if (!this.emailConnector || !this.email)
-                    throw new Error("w3m-email-login-widget: Unable to resend email");
-                this.loading = !0,
-                    await this.emailConnector.provider.connectEmail({
-                        email: this.email
-                    }),
-                    Rn.showSuccess("Code email resent")
-            }
-        } catch (e) {
-            Rn.showError(e)
-        } finally {
-            this.loading = !1
-        }
-    }
-}
-    ;
-sw.styles = Lte;
-oP([it()], sw.prototype, "loading", void 0);
-sw = oP([Pe("w3m-email-verify-device-view")], sw);
-const Bte = fn`
-  div {
-    width: 100%;
-    height: 400px;
-  }
+//   wui-grid {
+//     overflow: scroll;
+//     scrollbar-width: none;
+//     grid-auto-rows: min-content;
+//   }
 
-  [data-ready='false'] {
-    transform: scale(1.05);
-  }
+//   wui-grid[data-scroll='false'] {
+//     overflow: hidden;
+//   }
 
-  @media (max-width: 430px) {
-    [data-ready='false'] {
-      transform: translateY(-50px);
-    }
-  }
-`;
-var aP = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let ow = class extends Xt {
-    constructor() {
-        super(),
-            this.bodyObserver = void 0,
-            this.unsubscribe = [],
-            this.iframe = document.getElementById("w3m-iframe"),
-            this.ready = !1,
-            this.unsubscribe.push(en.subscribeKey("open", e => {
-                e || this.onHideIframe()
-            }
-            ))
-    }
-    disconnectedCallback() {
-        var e;
-        this.unsubscribe.forEach(t => t()),
-            (e = this.bodyObserver) == null || e.unobserve(window.document.body)
-    }
-    firstUpdated() {
-        this.iframe.style.display = "block";
-        const t = this.renderRoot.querySelector("div");
-        this.bodyObserver = new ResizeObserver(() => {
-            const i = (t == null ? void 0 : t.getBoundingClientRect()) ?? {
-                left: 0,
-                top: 0,
-                width: 0,
-                height: 0
-            };
-            this.iframe.style.width = `${i.width}px`,
-                this.iframe.style.height = `${i.height - 10}px`,
-                this.iframe.style.left = `${i.left}px`,
-                this.iframe.style.top = `${i.top + 10 / 2}px`,
-                this.ready = !0
-        }
-        ),
-            this.bodyObserver.observe(window.document.body)
-    }
-    render() {
-        return this.ready && this.onShowIframe(),
-            Ee`<div data-ready=${this.ready}></div>`
-    }
-    onShowIframe() {
-        const e = window.innerWidth <= 430;
-        this.iframe.animate([{
-            opacity: 0,
-            transform: e ? "translateY(50px)" : "scale(.95)"
-        }, {
-            opacity: 1,
-            transform: e ? "translateY(0)" : "scale(1)"
-        }], {
-            duration: 200,
-            easing: "ease",
-            fill: "forwards",
-            delay: 300
-        })
-    }
-    async onHideIframe() {
-        await this.iframe.animate([{
-            opacity: 1
-        }, {
-            opacity: 0
-        }], {
-            duration: 200,
-            easing: "ease",
-            fill: "forwards"
-        }).finished,
-            this.iframe.style.display = "none"
-    }
-}
-    ;
-ow.styles = Bte;
-aP([it()], ow.prototype, "ready", void 0);
-ow = aP([Pe("w3m-approve-transaction-view")], ow);
-var jte = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let VC = class extends Xt {
-    render() {
-        return Ee`
-      <wui-flex flexDirection="column" alignItems="center" gap="xl" padding="xl">
-        <wui-text variant="paragraph-400" color="fg-100">Follow the instructions on</wui-text>
-        <wui-chip
-          icon="externalLink"
-          variant="fill"
-          href=${tl.SECURE_SITE_DASHBOARD}
-          imageSrc=${tl.SECURE_SITE_FAVICON}
-        >
-        </wui-chip>
-        <wui-text variant="small-400" color="fg-200">
-          You will have to reconnect for security reasons
-        </wui-text>
-      </wui-flex>
-    `
-    }
-}
-    ;
-VC = jte([Pe("w3m-upgrade-wallet-view")], VC);
-/**
- * @license
- * Copyright 2020 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
-const Ute = r => r.strings === void 0;
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
-const Fte = {
-    ATTRIBUTE: 1,
-    CHILD: 2,
-    PROPERTY: 3,
-    BOOLEAN_ATTRIBUTE: 4,
-    EVENT: 5,
-    ELEMENT: 6
-}
-    , Wte = r => (...e) => ({
-        _$litDirective$: r,
-        values: e
-    });
-let Hte = class {
-    constructor(e) { }
-    get _$AU() {
-        return this._$AM._$AU
-    }
-    _$AT(e, t, n) {
-        this._$Ct = e,
-            this._$AM = t,
-            this._$Ci = n
-    }
-    _$AS(e, t) {
-        return this.update(e, t)
-    }
-    update(e, t) {
-        return this.render(...t)
-    }
-}
-    ;
-/**
- * @license
- * Copyright 2017 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
-const dg = (r, e) => {
-    var n;
-    const t = r._$AN;
-    if (t === void 0)
-        return !1;
-    for (const i of t)
-        (n = i._$AO) == null || n.call(i, e, !1),
-            dg(i, e);
-    return !0
-}
-    , aw = r => {
-        let e, t;
-        do {
-            if ((e = r._$AM) === void 0)
-                break;
-            t = e._$AN,
-                t.delete(r),
-                r = e
-        } while ((t == null ? void 0 : t.size) === 0)
-    }
-    , cP = r => {
-        for (let e; e = r._$AM; r = e) {
-            let t = e._$AN;
-            if (t === void 0)
-                e._$AN = t = new Set;
-            else if (t.has(r))
-                break;
-            t.add(r),
-                qte(e)
-        }
-    }
-    ;
-function zte(r) {
-    this._$AN !== void 0 ? (aw(this),
-        this._$AM = r,
-        cP(this)) : this._$AM = r
-}
-function Vte(r, e = !1, t = 0) {
-    const n = this._$AH
-        , i = this._$AN;
-    if (i !== void 0 && i.size !== 0)
-        if (e)
-            if (Array.isArray(n))
-                for (let s = t; s < n.length; s++)
-                    dg(n[s], !1),
-                        aw(n[s]);
-            else
-                n != null && (dg(n, !1),
-                    aw(n));
-        else
-            dg(this, r)
-}
-const qte = r => {
-    r.type == Fte.CHILD && (r._$AP ?? (r._$AP = Vte),
-        r._$AQ ?? (r._$AQ = zte))
-}
-    ;
-let Gte = class extends Hte {
-    constructor() {
-        super(...arguments),
-            this._$AN = void 0
-    }
-    _$AT(e, t, n) {
-        super._$AT(e, t, n),
-            cP(this),
-            this.isConnected = e._$AU
-    }
-    _$AO(e, t = !0) {
-        var n, i;
-        e !== this.isConnected && (this.isConnected = e,
-            e ? (n = this.reconnected) == null || n.call(this) : (i = this.disconnected) == null || i.call(this)),
-            t && (dg(this, e),
-                aw(this))
-    }
-    setValue(e) {
-        if (Ute(this._$Ct))
-            this._$Ct._$AI(e, this);
-        else {
-            const t = [...this._$Ct._$AH];
-            t[this._$Ci] = e,
-                this._$Ct._$AI(t, this, 0)
-        }
-    }
-    disconnected() { }
-    reconnected() { }
-}
-    ;
-/**
- * @license
- * Copyright 2020 Google LLC
- * SPDX-License-Identifier: BSD-3-Clause
- */
-const lP = () => new Kte;
-let Kte = class {
-}
-    ;
-const R3 = new WeakMap
-    , uP = Wte(class extends Gte {
-        render(r) {
-            return Fn
-        }
-        update(r, [e]) {
-            var n;
-            const t = e !== this.Y;
-            return t && this.Y !== void 0 && this.rt(void 0),
-                (t || this.lt !== this.ct) && (this.Y = e,
-                    this.ht = (n = r.options) == null ? void 0 : n.host,
-                    this.rt(this.ct = r.element)),
-                Fn
-        }
-        rt(r) {
-            if (typeof this.Y == "function") {
-                const e = this.ht ?? globalThis;
-                let t = R3.get(e);
-                t === void 0 && (t = new WeakMap,
-                    R3.set(e, t)),
-                    t.get(this.Y) !== void 0 && this.Y.call(this.ht, void 0),
-                    t.set(this.Y, r),
-                    r !== void 0 && this.Y.call(this.ht, r)
-            } else
-                this.Y.value = r
-        }
-        get lt() {
-            var r, e;
-            return typeof this.Y == "function" ? (r = R3.get(this.ht ?? globalThis)) == null ? void 0 : r.get(this.Y) : (e = this.Y) == null ? void 0 : e.value
-        }
-        disconnected() {
-            this.lt === this.ct && this.rt(void 0)
-        }
-        reconnected() {
-            this.rt(this.ct)
-        }
-    }
-    )
-    , Zte = fn`
-  wui-email-input {
-    width: 100%;
-  }
+//   wui-grid::-webkit-scrollbar {
+//     display: none;
+//   }
 
-  form {
-    width: 100%;
-    display: block;
-    position: relative;
-  }
-`;
-var p6 = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let s1 = class extends Xt {
-    constructor() {
-        var e;
-        super(...arguments),
-            this.formRef = lP(),
-            this.initialValue = ((e = at.state.data) == null ? void 0 : e.email) ?? "",
-            this.email = "",
-            this.loading = !1
-    }
-    firstUpdated() {
-        var e;
-        (e = this.formRef.value) == null || e.addEventListener("keydown", t => {
-            t.key === "Enter" && this.onSubmitEmail(t)
-        }
-        )
-    }
-    render() {
-        const e = !this.loading && this.email.length > 3 && this.email !== this.initialValue;
-        return Ee`
-      <wui-flex flexDirection="column" padding="m" gap="m">
-        <form ${uP(this.formRef)} @submit=${this.onSubmitEmail.bind(this)}>
-          <wui-email-input
-            value=${this.initialValue}
-            .disabled=${this.loading}
-            @inputChange=${this.onEmailInputChange.bind(this)}
-          >
-          </wui-email-input>
-          <input type="submit" hidden />
-        </form>
+//   wui-loading-spinner {
+//     justify-content: center;
+//     align-items: center;
+//   }
+// `;
+// var g6 = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let o1 = class extends Xt {
+//     constructor() {
+//         super(...arguments),
+//             this.prevQuery = "",
+//             this.loading = !0,
+//             this.query = ""
+//     }
+//     render() {
+//         return this.onSearch(),
+//             this.loading ? Ee`<wui-loading-spinner color="accent-100"></wui-loading-spinner>` : this.walletsTemplate()
+//     }
+//     async onSearch() {
+//         this.query !== this.prevQuery && (this.prevQuery = this.query,
+//             this.loading = !0,
+//             await lr.searchWallet({
+//                 search: this.query
+//             }),
+//             this.loading = !1)
+//     }
+//     walletsTemplate() {
+//         const { search: e } = lr.state
+//             , t = hP(e);
+//         return e.length ? Ee`
+//       <wui-grid
+//         .padding=${["0", "s", "s", "s"]}
+//         gridTemplateColumns="repeat(4, 1fr)"
+//         rowGap="l"
+//         columnGap="xs"
+//       >
+//         ${t.map(n => Ee`
+//             <wui-card-select
+//               imageSrc=${kr(Cn.getWalletImage(n))}
+//               type="wallet"
+//               name=${n.name}
+//               @click=${() => this.onConnectWallet(n)}
+//               .installed=${n.installed}
+//             ></wui-card-select>
+//           `)}
+//       </wui-grid>
+//     ` : Ee`
+//         <wui-flex justifyContent="center" alignItems="center" gap="s" flexDirection="column">
+//           <wui-icon-box
+//             size="lg"
+//             iconColor="fg-200"
+//             backgroundColor="fg-300"
+//             icon="wallet"
+//             background="transparent"
+//           ></wui-icon-box>
+//           <wui-text color="fg-200" variant="paragraph-500">No Wallet found</wui-text>
+//         </wui-flex>
+//       `
+//     }
+//     onConnectWallet(e) {
+//         const { connectors: t } = Xr.state
+//             , n = t.find(({ explorerId: i }) => i === e.id);
+//         n ? at.push("ConnectingExternal", {
+//             connector: n
+//         }) : at.push("ConnectingWalletConnect", {
+//             wallet: e
+//         })
+//     }
+// }
+//     ;
+// o1.styles = Qte;
+// g6([it()], o1.prototype, "loading", void 0);
+// g6([En()], o1.prototype, "query", void 0);
+// o1 = g6([Pe("w3m-all-wallets-search")], o1);
+// var fb = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let a1 = class extends Xt {
+//     constructor() {
+//         super(),
+//             this.platformTabs = [],
+//             this.unsubscribe = [],
+//             this.platforms = [],
+//             this.onSelectPlatfrom = void 0,
+//             this.buffering = !1,
+//             this.unsubscribe.push(wr.subscribeKey("buffering", e => this.buffering = e))
+//     }
+//     disconnectCallback() {
+//         this.unsubscribe.forEach(e => e())
+//     }
+//     render() {
+//         const e = this.generateTabs();
+//         return Ee`
+//       <wui-flex justifyContent="center" .padding=${["l", "0", "0", "0"]}>
+//         <wui-tabs
+//           ?disabled=${this.buffering}
+//           .tabs=${e}
+//           .onTabChange=${this.onTabChange.bind(this)}
+//         ></wui-tabs>
+//       </wui-flex>
+//     `
+//     }
+//     generateTabs() {
+//         const e = this.platforms.map(t => t === "browser" ? {
+//             label: "Browser",
+//             icon: "extension",
+//             platform: "browser"
+//         } : t === "mobile" ? {
+//             label: "Mobile",
+//             icon: "mobile",
+//             platform: "mobile"
+//         } : t === "qrcode" ? {
+//             label: "Mobile",
+//             icon: "mobile",
+//             platform: "qrcode"
+//         } : t === "web" ? {
+//             label: "Webapp",
+//             icon: "browser",
+//             platform: "web"
+//         } : t === "desktop" ? {
+//             label: "Desktop",
+//             icon: "desktop",
+//             platform: "desktop"
+//         } : {
+//             label: "Browser",
+//             icon: "extension",
+//             platform: "unsupported"
+//         });
+//         return this.platformTabs = e.map(({ platform: t }) => t),
+//             e
+//     }
+//     onTabChange(e) {
+//         var n;
+//         const t = this.platformTabs[e];
+//         t && ((n = this.onSelectPlatfrom) == null || n.call(this, t))
+//     }
+// }
+//     ;
+// fb([En({
+//     type: Array
+// })], a1.prototype, "platforms", void 0);
+// fb([En()], a1.prototype, "onSelectPlatfrom", void 0);
+// fb([it()], a1.prototype, "buffering", void 0);
+// a1 = fb([Pe("w3m-connecting-header")], a1);
+// var Xte = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let GC = class extends $s {
+//     constructor() {
+//         if (super(),
+//             !this.wallet)
+//             throw new Error("w3m-connecting-wc-browser: No wallet provided");
+//         this.onConnect = this.onConnectProxy.bind(this),
+//             this.onAutoConnect = this.onConnectProxy.bind(this),
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "SELECT_WALLET",
+//                 properties: {
+//                     name: this.wallet.name,
+//                     platform: "browser"
+//                 }
+//             })
+//     }
+//     async onConnectProxy() {
+//         try {
+//             this.error = !1;
+//             const { connectors: e } = Xr.state
+//                 , t = e.find(i => {
+//                     var s, o;
+//                     return i.type === "ANNOUNCED" && ((s = i.info) == null ? void 0 : s.rdns) === ((o = this.wallet) == null ? void 0 : o.rdns)
+//                 }
+//                 )
+//                 , n = e.find(i => i.type === "INJECTED");
+//             t ? await wr.connectExternal(t) : n && await wr.connectExternal(n),
+//                 en.close(),
+//                 Ft.sendEvent({
+//                     type: "track",
+//                     event: "CONNECT_SUCCESS",
+//                     properties: {
+//                         method: "browser"
+//                     }
+//                 })
+//         } catch (e) {
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "CONNECT_ERROR",
+//                 properties: {
+//                     message: (e == null ? void 0 : e.message) ?? "Unknown"
+//                 }
+//             }),
+//                 this.error = !0
+//         }
+//     }
+// }
+//     ;
+// GC = Xte([Pe("w3m-connecting-wc-browser")], GC);
+// var ere = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let KC = class extends $s {
+//     constructor() {
+//         if (super(),
+//             !this.wallet)
+//             throw new Error("w3m-connecting-wc-desktop: No wallet provided");
+//         this.onConnect = this.onConnectProxy.bind(this),
+//             this.onRender = this.onRenderProxy.bind(this),
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "SELECT_WALLET",
+//                 properties: {
+//                     name: this.wallet.name,
+//                     platform: "desktop"
+//                 }
+//             })
+//     }
+//     onRenderProxy() {
+//         !this.ready && this.uri && (this.ready = !0,
+//             this.timeout = setTimeout(() => {
+//                 var e;
+//                 (e = this.onConnect) == null || e.call(this)
+//             }
+//                 , 200))
+//     }
+//     onConnectProxy() {
+//         var e;
+//         if ((e = this.wallet) != null && e.desktop_link && this.uri)
+//             try {
+//                 this.error = !1;
+//                 const { desktop_link: t, name: n } = this.wallet
+//                     , { redirect: i, href: s } = vt.formatNativeUrl(t, this.uri);
+//                 wr.setWcLinking({
+//                     name: n,
+//                     href: s
+//                 }),
+//                     wr.setRecentWallet(this.wallet),
+//                     vt.openHref(i, "_blank")
+//             } catch {
+//                 this.error = !0
+//             }
+//     }
+// }
+//     ;
+// KC = ere([Pe("w3m-connecting-wc-desktop")], KC);
+// var tre = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let ZC = class extends $s {
+//     constructor() {
+//         if (super(),
+//             !this.wallet)
+//             throw new Error("w3m-connecting-wc-mobile: No wallet provided");
+//         this.onConnect = this.onConnectProxy.bind(this),
+//             this.onRender = this.onRenderProxy.bind(this),
+//             document.addEventListener("visibilitychange", this.onBuffering.bind(this)),
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "SELECT_WALLET",
+//                 properties: {
+//                     name: this.wallet.name,
+//                     platform: "mobile"
+//                 }
+//             })
+//     }
+//     disconnectedCallback() {
+//         super.disconnectedCallback(),
+//             document.removeEventListener("visibilitychange", this.onBuffering.bind(this))
+//     }
+//     onRenderProxy() {
+//         var e;
+//         !this.ready && this.uri && (this.ready = !0,
+//             (e = this.onConnect) == null || e.call(this))
+//     }
+//     onConnectProxy() {
+//         var e;
+//         if ((e = this.wallet) != null && e.mobile_link && this.uri)
+//             try {
+//                 this.error = !1;
+//                 const { mobile_link: t, name: n } = this.wallet
+//                     , { redirect: i, href: s } = vt.formatNativeUrl(t, this.uri);
+//                 wr.setWcLinking({
+//                     name: n,
+//                     href: s
+//                 }),
+//                     wr.setRecentWallet(this.wallet),
+//                     vt.openHref(i, "_self")
+//             } catch {
+//                 this.error = !0
+//             }
+//     }
+//     onBuffering() {
+//         const e = vt.isIos();
+//         (document == null ? void 0 : document.visibilityState) === "visible" && !this.error && e && (wr.setBuffering(!0),
+//             setTimeout(() => {
+//                 wr.setBuffering(!1)
+//             }
+//                 , 5e3))
+//     }
+// }
+//     ;
+// ZC = tre([Pe("w3m-connecting-wc-mobile")], ZC);
+// const rre = fn`
+//   @keyframes fadein {
+//     from {
+//       opacity: 0;
+//     }
+//     to {
+//       opacity: 1;
+//     }
+//   }
 
-        <wui-flex gap="s">
-          <wui-button size="md" variant="shade" fullWidth @click=${at.goBack}>
-            Cancel
-          </wui-button>
+//   wui-shimmer {
+//     width: 100%;
+//     aspect-ratio: 1 / 1;
+//     border-radius: clamp(0px, var(--wui-border-radius-l), 40px) !important;
+//   }
 
-          <wui-button
-            size="md"
-            variant="fill"
-            fullWidth
-            @click=${this.onSubmitEmail.bind(this)}
-            .disabled=${!e}
-            .loading=${this.loading}
-          >
-            Save
-          </wui-button>
-        </wui-flex>
-      </wui-flex>
-    `
-    }
-    onEmailInputChange(e) {
-        this.email = e.detail
-    }
-    async onSubmitEmail(e) {
-        try {
-            if (this.loading)
-                return;
-            this.loading = !0,
-                e.preventDefault();
-            const t = Xr.getEmailConnector();
-            if (!t)
-                throw new Error("w3m-update-email-wallet: Email connector not found");
-            await t.provider.updateEmail({
-                email: this.email
-            }),
-                Ft.sendEvent({
-                    type: "track",
-                    event: "EMAIL_EDIT"
-                }),
-                at.replace("UpdateEmailWalletWaiting", {
-                    email: this.email
-                })
-        } catch (t) {
-            Rn.showError(t),
-                this.loading = !1
-        }
-    }
-}
-    ;
-s1.styles = Zte;
-p6([it()], s1.prototype, "email", void 0);
-p6([it()], s1.prototype, "loading", void 0);
-s1 = p6([Pe("w3m-update-email-wallet-view")], s1);
-const Jte = fn`
-  wui-icon-box {
-    height: var(--wui-icon-box-size-xl);
-    width: var(--wui-icon-box-size-xl);
-  }
-`;
-var fP = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let cw = class extends Xt {
-    constructor() {
-        var e;
-        super(),
-            this.email = (e = at.state.data) == null ? void 0 : e.email,
-            this.emailConnector = Xr.getEmailConnector(),
-            this.loading = !1,
-            this.listenForEmailUpdateApproval()
-    }
-    render() {
-        if (!this.email)
-            throw new Error("w3m-update-email-wallet-waiting-view: No email provided");
-        if (!this.emailConnector)
-            throw new Error("w3m-update-email-wallet-waiting-view: No email connector provided");
-        return Ee`
-      <wui-flex
-        flexDirection="column"
-        alignItems="center"
-        .padding=${["xxl", "s", "xxl", "s"]}
-        gap="l"
-      >
-        <wui-icon-box
-          size="xl"
-          iconcolor="accent-100"
-          backgroundcolor="accent-100"
-          icon="mail"
-          background="opaque"
-        ></wui-icon-box>
+//   wui-qr-code {
+//     opacity: 0;
+//     animation-duration: 200ms;
+//     animation-timing-function: ease;
+//     animation-name: fadein;
+//     animation-fill-mode: forwards;
+//   }
+// `;
+// var nre = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let _E = class extends $s {
+//     constructor() {
+//         var e;
+//         super(),
+//             this.forceUpdate = () => {
+//                 this.requestUpdate()
+//             }
+//             ,
+//             window.addEventListener("resize", this.forceUpdate),
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "SELECT_WALLET",
+//                 properties: {
+//                     name: ((e = this.wallet) == null ? void 0 : e.name) ?? "WalletConnect",
+//                     platform: "qrcode"
+//                 }
+//             })
+//     }
+//     disconnectedCallback() {
+//         super.disconnectedCallback(),
+//             window.removeEventListener("resize", this.forceUpdate)
+//     }
+//     render() {
+//         return this.onRenderProxy(),
+//             Ee`
+//       <wui-flex padding="xl" flexDirection="column" gap="xl" alignItems="center">
+//         <wui-shimmer borderRadius="l" width="100%"> ${this.qrCodeTemplate()} </wui-shimmer>
 
-        <wui-flex flexDirection="column" alignItems="center" gap="s">
-          <wui-flex flexDirection="column" alignItems="center">
-            <wui-text variant="paragraph-400" color="fg-100">
-              Approve verification link we sent to
-            </wui-text>
-            <wui-text variant="paragraph-400" color="fg-100">${this.email}</wui-text>
-          </wui-flex>
+//         <wui-text variant="paragraph-500" color="fg-100">
+//           Scan this QR Code with your phone
+//         </wui-text>
+//         ${this.copyTemplate()}
+//       </wui-flex>
 
-          <wui-text variant="small-400" color="fg-200" align="center">
-            You will receive an approval request on your former mail to confirm the new one
-          </wui-text>
+//       <w3m-mobile-download-links .wallet=${this.wallet}></w3m-mobile-download-links>
+//     `
+//     }
+//     onRenderProxy() {
+//         !this.ready && this.uri && (this.timeout = setTimeout(() => {
+//             this.ready = !0
+//         }
+//             , 200))
+//     }
+//     qrCodeTemplate() {
+//         if (!this.uri || !this.ready)
+//             return null;
+//         const e = this.getBoundingClientRect().width - 40
+//             , t = this.wallet ? this.wallet.name : void 0;
+//         return wr.setWcLinking(void 0),
+//             wr.setRecentWallet(this.wallet),
+//             Ee` <wui-qr-code
+//       size=${e}
+//       theme=${Rs.state.themeMode}
+//       uri=${this.uri}
+//       imageSrc=${kr(Cn.getWalletImage(this.wallet))}
+//       alt=${kr(t)}
+//     ></wui-qr-code>`
+//     }
+//     copyTemplate() {
+//         const e = !this.uri || !this.ready;
+//         return Ee`<wui-link
+//       .disabled=${e}
+//       @click=${this.onCopyUri}
+//       color="fg-200"
+//       data-testid="copy-wc2-uri"
+//     >
+//       <wui-icon size="xs" color="fg-200" slot="iconLeft" name="copy"></wui-icon>
+//       Copy link
+//     </wui-link>`
+//     }
+// }
+//     ;
+// _E.styles = rre;
+// _E = nre([Pe("w3m-connecting-wc-qrcode")], _E);
+// const ire = fn`
+//   :host {
+//     display: flex;
+//     justify-content: center;
+//     gap: var(--wui-spacing-2xl);
+//   }
 
-          <wui-flex alignItems="center" id="w3m-resend-section">
-            <wui-text variant="small-400" color="fg-100" align="center">
-              Didn't receive it?
-            </wui-text>
-            <wui-link @click=${this.onResendCode.bind(this)} .disabled=${this.loading}>
-              Resend email
-            </wui-link>
-          </wui-flex>
-        </wui-flex>
-      </wui-flex>
-    `
-    }
-    async listenForEmailUpdateApproval() {
-        this.emailConnector && (await this.emailConnector.provider.awaitUpdateEmail(),
-            at.replace("Account"),
-            Rn.showSuccess("Email updated"))
-    }
-    async onResendCode() {
-        try {
-            if (!this.loading) {
-                if (!this.emailConnector || !this.email)
-                    throw new Error("w3m-update-email-wallet-waiting-view: Unable to resend email");
-                this.loading = !0,
-                    await this.emailConnector.provider.updateEmail({
-                        email: this.email
-                    }),
-                    this.listenForEmailUpdateApproval(),
-                    Rn.showSuccess("Code email resent")
-            }
-        } catch (e) {
-            Rn.showError(e)
-        } finally {
-            this.loading = !1
-        }
-    }
-}
-    ;
-cw.styles = Jte;
-fP([it()], cw.prototype, "loading", void 0);
-cw = fP([Pe("w3m-update-email-wallet-waiting-view")], cw);
-const Yte = fn`
-  wui-grid {
-    max-height: clamp(360px, 400px, 80vh);
-    overflow: scroll;
-    scrollbar-width: none;
-    grid-auto-rows: min-content;
-    grid-template-columns: repeat(auto-fill, 76px);
-  }
+//   wui-visual-thumbnail:nth-child(1) {
+//     z-index: 1;
+//   }
+// `;
+// var sre = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let EE = class extends Xt {
+//     constructor() {
+//         var e;
+//         super(...arguments),
+//             this.dappImageUrl = (e = Ur.state.metadata) == null ? void 0 : e.icons,
+//             this.walletImageUrl = ls.getConnectedWalletImageUrl()
+//     }
+//     firstUpdated() {
+//         var t;
+//         const e = (t = this.shadowRoot) == null ? void 0 : t.querySelectorAll("wui-visual-thumbnail");
+//         e != null && e[0] && this.createAnimation(e[0], "translate(18px)"),
+//             e != null && e[1] && this.createAnimation(e[1], "translate(-18px)")
+//     }
+//     render() {
+//         var e;
+//         return Ee`
+//       <wui-visual-thumbnail
+//         ?borderRadiusFull=${!0}
+//         .imageSrc=${(e = this.dappImageUrl) == null ? void 0 : e[0]}
+//       ></wui-visual-thumbnail>
+//       <wui-visual-thumbnail .imageSrc=${this.walletImageUrl}></wui-visual-thumbnail>
+//     `
+//     }
+//     createAnimation(e, t) {
+//         e.animate([{
+//             transform: "translateX(0px)"
+//         }, {
+//             transform: t
+//         }], {
+//             duration: 1600,
+//             easing: "cubic-bezier(0.56, 0, 0.48, 1)",
+//             direction: "alternate",
+//             iterations: 1 / 0
+//         })
+//     }
+// }
+//     ;
+// EE.styles = ire;
+// EE = sre([Pe("w3m-connecting-siwe")], EE);
+// var ore = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let JC = class extends Xt {
+//     constructor() {
+//         var e;
+//         if (super(),
+//             this.wallet = (e = at.state.data) == null ? void 0 : e.wallet,
+//             !this.wallet)
+//             throw new Error("w3m-connecting-wc-unsupported: No wallet provided");
+//         Ft.sendEvent({
+//             type: "track",
+//             event: "SELECT_WALLET",
+//             properties: {
+//                 name: this.wallet.name,
+//                 platform: "browser"
+//             }
+//         })
+//     }
+//     render() {
+//         return Ee`
+//       <wui-flex
+//         flexDirection="column"
+//         alignItems="center"
+//         .padding=${["3xl", "xl", "xl", "xl"]}
+//         gap="xl"
+//       >
+//         <wui-wallet-image
+//           size="lg"
+//           imageSrc=${kr(Cn.getWalletImage(this.wallet))}
+//         ></wui-wallet-image>
 
-  @media (max-width: 435px) {
-    wui-grid {
-      grid-template-columns: repeat(auto-fill, 77px);
-    }
-  }
+//         <wui-text variant="paragraph-500" color="fg-100">Not Detected</wui-text>
+//       </wui-flex>
 
-  wui-grid[data-scroll='false'] {
-    overflow: hidden;
-  }
-
-  wui-grid::-webkit-scrollbar {
-    display: none;
-  }
-
-  wui-loading-spinner {
-    padding-top: var(--wui-spacing-l);
-    padding-bottom: var(--wui-spacing-l);
-    justify-content: center;
-    grid-column: 1 / span 4;
-  }
-`;
-function hP(r) {
-    const { connectors: e } = Xr.state
-        , t = e.filter(s => s.type === "ANNOUNCED").reduce((s, o) => {
-            var a;
-            return (a = o.info) != null && a.rdns && (s[o.info.rdns] = !0),
-                s
-        }
-            , {});
-    return r.map(s => ({
-        ...s,
-        installed: !!s.rdns && !!t[s.rdns ?? ""]
-    })).sort((s, o) => Number(o.installed) - Number(s.installed))
-}
-var M1 = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-const qC = "local-paginator";
-let Zf = class extends Xt {
-    constructor() {
-        super(),
-            this.unsubscribe = [],
-            this.paginationObserver = void 0,
-            this.initial = !lr.state.wallets.length,
-            this.wallets = lr.state.wallets,
-            this.recommended = lr.state.recommended,
-            this.featured = lr.state.featured,
-            this.unsubscribe.push(lr.subscribeKey("wallets", e => this.wallets = e), lr.subscribeKey("recommended", e => this.recommended = e), lr.subscribeKey("featured", e => this.featured = e))
-    }
-    firstUpdated() {
-        this.initialFetch(),
-            this.createPaginationObserver()
-    }
-    disconnectedCallback() {
-        var e;
-        this.unsubscribe.forEach(t => t()),
-            (e = this.paginationObserver) == null || e.disconnect()
-    }
-    render() {
-        return Ee`
-      <wui-grid
-        data-scroll=${!this.initial}
-        .padding=${["0", "s", "s", "s"]}
-        columnGap="xxs"
-        rowGap="l"
-        justifyContent="space-between"
-      >
-        ${this.initial ? this.shimmerTemplate(16) : this.walletsTemplate()}
-        ${this.paginationLoaderTemplate()}
-      </wui-grid>
-    `
-    }
-    async initialFetch() {
-        var t;
-        const e = (t = this.shadowRoot) == null ? void 0 : t.querySelector("wui-grid");
-        this.initial && e && (await lr.fetchWallets({
-            page: 1
-        }),
-            await e.animate([{
-                opacity: 1
-            }, {
-                opacity: 0
-            }], {
-                duration: 200,
-                fill: "forwards",
-                easing: "ease"
-            }).finished,
-            this.initial = !1,
-            e.animate([{
-                opacity: 0
-            }, {
-                opacity: 1
-            }], {
-                duration: 200,
-                fill: "forwards",
-                easing: "ease"
-            }))
-    }
-    shimmerTemplate(e, t) {
-        return [...Array(e)].map(() => Ee`
-        <wui-card-select-loader type="wallet" id=${kr(t)}></wui-card-select-loader>
-      `)
-    }
-    walletsTemplate() {
-        const e = [...this.featured, ...this.recommended, ...this.wallets];
-        return hP(e).map(n => Ee`
-        <wui-card-select
-          imageSrc=${kr(Cn.getWalletImage(n))}
-          type="wallet"
-          name=${n.name}
-          @click=${() => this.onConnectWallet(n)}
-          .installed=${n.installed}
-        ></wui-card-select>
-      `)
-    }
-    paginationLoaderTemplate() {
-        const { wallets: e, recommended: t, featured: n, count: i } = lr.state
-            , s = window.innerWidth < 352 ? 3 : 4
-            , o = e.length + t.length;
-        let c = Math.ceil(o / s) * s - o + s;
-        return c -= e.length ? n.length % s : 0,
-            i === 0 && n.length > 0 ? null : i === 0 || [...n, ...e, ...t].length < i ? this.shimmerTemplate(c, qC) : null
-    }
-    createPaginationObserver() {
-        var t;
-        const e = (t = this.shadowRoot) == null ? void 0 : t.querySelector(`#${qC}`);
-        e && (this.paginationObserver = new IntersectionObserver(([n]) => {
-            if (n != null && n.isIntersecting && !this.initial) {
-                const { page: i, count: s, wallets: o } = lr.state;
-                o.length < s && lr.fetchWallets({
-                    page: i + 1
-                })
-            }
-        }
-        ),
-            this.paginationObserver.observe(e))
-    }
-    onConnectWallet(e) {
-        const { connectors: t } = Xr.state
-            , n = t.find(({ explorerId: i }) => i === e.id);
-        n ? at.push("ConnectingExternal", {
-            connector: n
-        }) : at.push("ConnectingWalletConnect", {
-            wallet: e
-        })
-    }
-}
-    ;
-Zf.styles = Yte;
-M1([it()], Zf.prototype, "initial", void 0);
-M1([it()], Zf.prototype, "wallets", void 0);
-M1([it()], Zf.prototype, "recommended", void 0);
-M1([it()], Zf.prototype, "featured", void 0);
-Zf = M1([Pe("w3m-all-wallets-list")], Zf);
-const Qte = fn`
-  wui-grid,
-  wui-loading-spinner,
-  wui-flex {
-    height: 360px;
-  }
-
-  wui-grid {
-    overflow: scroll;
-    scrollbar-width: none;
-    grid-auto-rows: min-content;
-  }
-
-  wui-grid[data-scroll='false'] {
-    overflow: hidden;
-  }
-
-  wui-grid::-webkit-scrollbar {
-    display: none;
-  }
-
-  wui-loading-spinner {
-    justify-content: center;
-    align-items: center;
-  }
-`;
-var g6 = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let o1 = class extends Xt {
-    constructor() {
-        super(...arguments),
-            this.prevQuery = "",
-            this.loading = !0,
-            this.query = ""
-    }
-    render() {
-        return this.onSearch(),
-            this.loading ? Ee`<wui-loading-spinner color="accent-100"></wui-loading-spinner>` : this.walletsTemplate()
-    }
-    async onSearch() {
-        this.query !== this.prevQuery && (this.prevQuery = this.query,
-            this.loading = !0,
-            await lr.searchWallet({
-                search: this.query
-            }),
-            this.loading = !1)
-    }
-    walletsTemplate() {
-        const { search: e } = lr.state
-            , t = hP(e);
-        return e.length ? Ee`
-      <wui-grid
-        .padding=${["0", "s", "s", "s"]}
-        gridTemplateColumns="repeat(4, 1fr)"
-        rowGap="l"
-        columnGap="xs"
-      >
-        ${t.map(n => Ee`
-            <wui-card-select
-              imageSrc=${kr(Cn.getWalletImage(n))}
-              type="wallet"
-              name=${n.name}
-              @click=${() => this.onConnectWallet(n)}
-              .installed=${n.installed}
-            ></wui-card-select>
-          `)}
-      </wui-grid>
-    ` : Ee`
-        <wui-flex justifyContent="center" alignItems="center" gap="s" flexDirection="column">
-          <wui-icon-box
-            size="lg"
-            iconColor="fg-200"
-            backgroundColor="fg-300"
-            icon="wallet"
-            background="transparent"
-          ></wui-icon-box>
-          <wui-text color="fg-200" variant="paragraph-500">No Wallet found</wui-text>
-        </wui-flex>
-      `
-    }
-    onConnectWallet(e) {
-        const { connectors: t } = Xr.state
-            , n = t.find(({ explorerId: i }) => i === e.id);
-        n ? at.push("ConnectingExternal", {
-            connector: n
-        }) : at.push("ConnectingWalletConnect", {
-            wallet: e
-        })
-    }
-}
-    ;
-o1.styles = Qte;
-g6([it()], o1.prototype, "loading", void 0);
-g6([En()], o1.prototype, "query", void 0);
-o1 = g6([Pe("w3m-all-wallets-search")], o1);
-var fb = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let a1 = class extends Xt {
-    constructor() {
-        super(),
-            this.platformTabs = [],
-            this.unsubscribe = [],
-            this.platforms = [],
-            this.onSelectPlatfrom = void 0,
-            this.buffering = !1,
-            this.unsubscribe.push(wr.subscribeKey("buffering", e => this.buffering = e))
-    }
-    disconnectCallback() {
-        this.unsubscribe.forEach(e => e())
-    }
-    render() {
-        const e = this.generateTabs();
-        return Ee`
-      <wui-flex justifyContent="center" .padding=${["l", "0", "0", "0"]}>
-        <wui-tabs
-          ?disabled=${this.buffering}
-          .tabs=${e}
-          .onTabChange=${this.onTabChange.bind(this)}
-        ></wui-tabs>
-      </wui-flex>
-    `
-    }
-    generateTabs() {
-        const e = this.platforms.map(t => t === "browser" ? {
-            label: "Browser",
-            icon: "extension",
-            platform: "browser"
-        } : t === "mobile" ? {
-            label: "Mobile",
-            icon: "mobile",
-            platform: "mobile"
-        } : t === "qrcode" ? {
-            label: "Mobile",
-            icon: "mobile",
-            platform: "qrcode"
-        } : t === "web" ? {
-            label: "Webapp",
-            icon: "browser",
-            platform: "web"
-        } : t === "desktop" ? {
-            label: "Desktop",
-            icon: "desktop",
-            platform: "desktop"
-        } : {
-            label: "Browser",
-            icon: "extension",
-            platform: "unsupported"
-        });
-        return this.platformTabs = e.map(({ platform: t }) => t),
-            e
-    }
-    onTabChange(e) {
-        var n;
-        const t = this.platformTabs[e];
-        t && ((n = this.onSelectPlatfrom) == null || n.call(this, t))
-    }
-}
-    ;
-fb([En({
-    type: Array
-})], a1.prototype, "platforms", void 0);
-fb([En()], a1.prototype, "onSelectPlatfrom", void 0);
-fb([it()], a1.prototype, "buffering", void 0);
-a1 = fb([Pe("w3m-connecting-header")], a1);
-var Xte = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let GC = class extends $s {
-    constructor() {
-        if (super(),
-            !this.wallet)
-            throw new Error("w3m-connecting-wc-browser: No wallet provided");
-        this.onConnect = this.onConnectProxy.bind(this),
-            this.onAutoConnect = this.onConnectProxy.bind(this),
-            Ft.sendEvent({
-                type: "track",
-                event: "SELECT_WALLET",
-                properties: {
-                    name: this.wallet.name,
-                    platform: "browser"
-                }
-            })
-    }
-    async onConnectProxy() {
-        try {
-            this.error = !1;
-            const { connectors: e } = Xr.state
-                , t = e.find(i => {
-                    var s, o;
-                    return i.type === "ANNOUNCED" && ((s = i.info) == null ? void 0 : s.rdns) === ((o = this.wallet) == null ? void 0 : o.rdns)
-                }
-                )
-                , n = e.find(i => i.type === "INJECTED");
-            t ? await wr.connectExternal(t) : n && await wr.connectExternal(n),
-                en.close(),
-                Ft.sendEvent({
-                    type: "track",
-                    event: "CONNECT_SUCCESS",
-                    properties: {
-                        method: "browser"
-                    }
-                })
-        } catch (e) {
-            Ft.sendEvent({
-                type: "track",
-                event: "CONNECT_ERROR",
-                properties: {
-                    message: (e == null ? void 0 : e.message) ?? "Unknown"
-                }
-            }),
-                this.error = !0
-        }
-    }
-}
-    ;
-GC = Xte([Pe("w3m-connecting-wc-browser")], GC);
-var ere = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let KC = class extends $s {
-    constructor() {
-        if (super(),
-            !this.wallet)
-            throw new Error("w3m-connecting-wc-desktop: No wallet provided");
-        this.onConnect = this.onConnectProxy.bind(this),
-            this.onRender = this.onRenderProxy.bind(this),
-            Ft.sendEvent({
-                type: "track",
-                event: "SELECT_WALLET",
-                properties: {
-                    name: this.wallet.name,
-                    platform: "desktop"
-                }
-            })
-    }
-    onRenderProxy() {
-        !this.ready && this.uri && (this.ready = !0,
-            this.timeout = setTimeout(() => {
-                var e;
-                (e = this.onConnect) == null || e.call(this)
-            }
-                , 200))
-    }
-    onConnectProxy() {
-        var e;
-        if ((e = this.wallet) != null && e.desktop_link && this.uri)
-            try {
-                this.error = !1;
-                const { desktop_link: t, name: n } = this.wallet
-                    , { redirect: i, href: s } = vt.formatNativeUrl(t, this.uri);
-                wr.setWcLinking({
-                    name: n,
-                    href: s
-                }),
-                    wr.setRecentWallet(this.wallet),
-                    vt.openHref(i, "_blank")
-            } catch {
-                this.error = !0
-            }
-    }
-}
-    ;
-KC = ere([Pe("w3m-connecting-wc-desktop")], KC);
-var tre = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let ZC = class extends $s {
-    constructor() {
-        if (super(),
-            !this.wallet)
-            throw new Error("w3m-connecting-wc-mobile: No wallet provided");
-        this.onConnect = this.onConnectProxy.bind(this),
-            this.onRender = this.onRenderProxy.bind(this),
-            document.addEventListener("visibilitychange", this.onBuffering.bind(this)),
-            Ft.sendEvent({
-                type: "track",
-                event: "SELECT_WALLET",
-                properties: {
-                    name: this.wallet.name,
-                    platform: "mobile"
-                }
-            })
-    }
-    disconnectedCallback() {
-        super.disconnectedCallback(),
-            document.removeEventListener("visibilitychange", this.onBuffering.bind(this))
-    }
-    onRenderProxy() {
-        var e;
-        !this.ready && this.uri && (this.ready = !0,
-            (e = this.onConnect) == null || e.call(this))
-    }
-    onConnectProxy() {
-        var e;
-        if ((e = this.wallet) != null && e.mobile_link && this.uri)
-            try {
-                this.error = !1;
-                const { mobile_link: t, name: n } = this.wallet
-                    , { redirect: i, href: s } = vt.formatNativeUrl(t, this.uri);
-                wr.setWcLinking({
-                    name: n,
-                    href: s
-                }),
-                    wr.setRecentWallet(this.wallet),
-                    vt.openHref(i, "_self")
-            } catch {
-                this.error = !0
-            }
-    }
-    onBuffering() {
-        const e = vt.isIos();
-        (document == null ? void 0 : document.visibilityState) === "visible" && !this.error && e && (wr.setBuffering(!0),
-            setTimeout(() => {
-                wr.setBuffering(!1)
-            }
-                , 5e3))
-    }
-}
-    ;
-ZC = tre([Pe("w3m-connecting-wc-mobile")], ZC);
-const rre = fn`
-  @keyframes fadein {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  wui-shimmer {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: clamp(0px, var(--wui-border-radius-l), 40px) !important;
-  }
-
-  wui-qr-code {
-    opacity: 0;
-    animation-duration: 200ms;
-    animation-timing-function: ease;
-    animation-name: fadein;
-    animation-fill-mode: forwards;
-  }
-`;
-var nre = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let _E = class extends $s {
-    constructor() {
-        var e;
-        super(),
-            this.forceUpdate = () => {
-                this.requestUpdate()
-            }
-            ,
-            window.addEventListener("resize", this.forceUpdate),
-            Ft.sendEvent({
-                type: "track",
-                event: "SELECT_WALLET",
-                properties: {
-                    name: ((e = this.wallet) == null ? void 0 : e.name) ?? "WalletConnect",
-                    platform: "qrcode"
-                }
-            })
-    }
-    disconnectedCallback() {
-        super.disconnectedCallback(),
-            window.removeEventListener("resize", this.forceUpdate)
-    }
-    render() {
-        return this.onRenderProxy(),
-            Ee`
-      <wui-flex padding="xl" flexDirection="column" gap="xl" alignItems="center">
-        <wui-shimmer borderRadius="l" width="100%"> ${this.qrCodeTemplate()} </wui-shimmer>
-
-        <wui-text variant="paragraph-500" color="fg-100">
-          Scan this QR Code with your phone
-        </wui-text>
-        ${this.copyTemplate()}
-      </wui-flex>
-
-      <w3m-mobile-download-links .wallet=${this.wallet}></w3m-mobile-download-links>
-    `
-    }
-    onRenderProxy() {
-        !this.ready && this.uri && (this.timeout = setTimeout(() => {
-            this.ready = !0
-        }
-            , 200))
-    }
-    qrCodeTemplate() {
-        if (!this.uri || !this.ready)
-            return null;
-        const e = this.getBoundingClientRect().width - 40
-            , t = this.wallet ? this.wallet.name : void 0;
-        return wr.setWcLinking(void 0),
-            wr.setRecentWallet(this.wallet),
-            Ee` <wui-qr-code
-      size=${e}
-      theme=${Rs.state.themeMode}
-      uri=${this.uri}
-      imageSrc=${kr(Cn.getWalletImage(this.wallet))}
-      alt=${kr(t)}
-    ></wui-qr-code>`
-    }
-    copyTemplate() {
-        const e = !this.uri || !this.ready;
-        return Ee`<wui-link
-      .disabled=${e}
-      @click=${this.onCopyUri}
-      color="fg-200"
-      data-testid="copy-wc2-uri"
-    >
-      <wui-icon size="xs" color="fg-200" slot="iconLeft" name="copy"></wui-icon>
-      Copy link
-    </wui-link>`
-    }
-}
-    ;
-_E.styles = rre;
-_E = nre([Pe("w3m-connecting-wc-qrcode")], _E);
-const ire = fn`
-  :host {
-    display: flex;
-    justify-content: center;
-    gap: var(--wui-spacing-2xl);
-  }
-
-  wui-visual-thumbnail:nth-child(1) {
-    z-index: 1;
-  }
-`;
-var sre = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let EE = class extends Xt {
-    constructor() {
-        var e;
-        super(...arguments),
-            this.dappImageUrl = (e = Ur.state.metadata) == null ? void 0 : e.icons,
-            this.walletImageUrl = ls.getConnectedWalletImageUrl()
-    }
-    firstUpdated() {
-        var t;
-        const e = (t = this.shadowRoot) == null ? void 0 : t.querySelectorAll("wui-visual-thumbnail");
-        e != null && e[0] && this.createAnimation(e[0], "translate(18px)"),
-            e != null && e[1] && this.createAnimation(e[1], "translate(-18px)")
-    }
-    render() {
-        var e;
-        return Ee`
-      <wui-visual-thumbnail
-        ?borderRadiusFull=${!0}
-        .imageSrc=${(e = this.dappImageUrl) == null ? void 0 : e[0]}
-      ></wui-visual-thumbnail>
-      <wui-visual-thumbnail .imageSrc=${this.walletImageUrl}></wui-visual-thumbnail>
-    `
-    }
-    createAnimation(e, t) {
-        e.animate([{
-            transform: "translateX(0px)"
-        }, {
-            transform: t
-        }], {
-            duration: 1600,
-            easing: "cubic-bezier(0.56, 0, 0.48, 1)",
-            direction: "alternate",
-            iterations: 1 / 0
-        })
-    }
-}
-    ;
-EE.styles = ire;
-EE = sre([Pe("w3m-connecting-siwe")], EE);
-var ore = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let JC = class extends Xt {
-    constructor() {
-        var e;
-        if (super(),
-            this.wallet = (e = at.state.data) == null ? void 0 : e.wallet,
-            !this.wallet)
-            throw new Error("w3m-connecting-wc-unsupported: No wallet provided");
-        Ft.sendEvent({
-            type: "track",
-            event: "SELECT_WALLET",
-            properties: {
-                name: this.wallet.name,
-                platform: "browser"
-            }
-        })
-    }
-    render() {
-        return Ee`
-      <wui-flex
-        flexDirection="column"
-        alignItems="center"
-        .padding=${["3xl", "xl", "xl", "xl"]}
-        gap="xl"
-      >
-        <wui-wallet-image
-          size="lg"
-          imageSrc=${kr(Cn.getWalletImage(this.wallet))}
-        ></wui-wallet-image>
-
-        <wui-text variant="paragraph-500" color="fg-100">Not Detected</wui-text>
-      </wui-flex>
-
-      <w3m-mobile-download-links .wallet=${this.wallet}></w3m-mobile-download-links>
-    `
-    }
-}
-    ;
-JC = ore([Pe("w3m-connecting-wc-unsupported")], JC);
-var are = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
-let YC = class extends $s {
-    constructor() {
-        if (super(),
-            !this.wallet)
-            throw new Error("w3m-connecting-wc-web: No wallet provided");
-        this.onConnect = this.onConnectProxy.bind(this),
-            this.secondaryBtnLabel = "Open",
-            this.secondaryLabel = "Open and continue in a new browser tab",
-            this.secondaryBtnIcon = "externalLink",
-            Ft.sendEvent({
-                type: "track",
-                event: "SELECT_WALLET",
-                properties: {
-                    name: this.wallet.name,
-                    platform: "web"
-                }
-            })
-    }
-    onConnectProxy() {
-        var e;
-        if ((e = this.wallet) != null && e.webapp_link && this.uri)
-            try {
-                this.error = !1;
-                const { webapp_link: t, name: n } = this.wallet
-                    , { redirect: i, href: s } = vt.formatUniversalUrl(t, this.uri);
-                wr.setWcLinking({
-                    name: n,
-                    href: s
-                }),
-                    wr.setRecentWallet(this.wallet),
-                    vt.openHref(i, "_blank")
-            } catch {
-                this.error = !0
-            }
-    }
-}
-    ;
-YC = are([Pe("w3m-connecting-wc-web")], YC);
-const cre = fn`
-  wui-icon-link[data-hidden='true'] {
-    opacity: 0 !important;
-    pointer-events: none;
-  }
-`;
-var hb = function (r, e, t, n) {
-    var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
-    if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
-        s = Reflect.decorate(r, e, t, n);
-    else
-        for (var a = r.length - 1; a >= 0; a--)
-            (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
-    return i > 3 && s && Object.defineProperty(e, t, s),
-        s
-};
+//       <w3m-mobile-download-links .wallet=${this.wallet}></w3m-mobile-download-links>
+//     `
+//     }
+// }
+//     ;
+// JC = ore([Pe("w3m-connecting-wc-unsupported")], JC);
+// var are = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
+// let YC = class extends $s {
+//     constructor() {
+//         if (super(),
+//             !this.wallet)
+//             throw new Error("w3m-connecting-wc-web: No wallet provided");
+//         this.onConnect = this.onConnectProxy.bind(this),
+//             this.secondaryBtnLabel = "Open",
+//             this.secondaryLabel = "Open and continue in a new browser tab",
+//             this.secondaryBtnIcon = "externalLink",
+//             Ft.sendEvent({
+//                 type: "track",
+//                 event: "SELECT_WALLET",
+//                 properties: {
+//                     name: this.wallet.name,
+//                     platform: "web"
+//                 }
+//             })
+//     }
+//     onConnectProxy() {
+//         var e;
+//         if ((e = this.wallet) != null && e.webapp_link && this.uri)
+//             try {
+//                 this.error = !1;
+//                 const { webapp_link: t, name: n } = this.wallet
+//                     , { redirect: i, href: s } = vt.formatUniversalUrl(t, this.uri);
+//                 wr.setWcLinking({
+//                     name: n,
+//                     href: s
+//                 }),
+//                     wr.setRecentWallet(this.wallet),
+//                     vt.openHref(i, "_blank")
+//             } catch {
+//                 this.error = !0
+//             }
+//     }
+// }
+//     ;
+// YC = are([Pe("w3m-connecting-wc-web")], YC);
+// const cre = fn`
+//   wui-icon-link[data-hidden='true'] {
+//     opacity: 0 !important;
+//     pointer-events: none;
+//   }
+// `;
+// var hb = function (r, e, t, n) {
+//     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
+//     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
+//         s = Reflect.decorate(r, e, t, n);
+//     else
+//         for (var a = r.length - 1; a >= 0; a--)
+//             (o = r[a]) && (s = (i < 3 ? o(s) : i > 3 ? o(e, t, s) : o(e, t)) || s);
+//     return i > 3 && s && Object.defineProperty(e, t, s),
+//         s
+// };
 // function QC() {
 //     var o, a, c, u, d, f, p;
 //     const r = (a = (o = at.state.data) == null ? void 0 : o.connector) == null ? void 0 : a.name
@@ -36573,40 +36573,40 @@ var ure = function (r, e, t, n) {
     return i > 3 && s && Object.defineProperty(e, t, s),
         s
 };
-// let SE = class extends Xt {
-//     render() {
-//         const { termsConditionsUrl: e, privacyPolicyUrl: t } = Ur.state;
-//         return !e && !t ? null : Ee`
-//       <wui-flex .padding=${["m", "s", "s", "s"]} justifyContent="center">
-//         <wui-text color="fg-250" variant="small-400" align="center">
-//           By connecting your wallet, you agree to our <br />
-//           ${this.termsTemplate()} ${this.andTemplate()} ${this.privacyTemplate()}
-//         </wui-text>
-//       </wui-flex>
-//     `
-//     }
-//     andTemplate() {
-//         const { termsConditionsUrl: e, privacyPolicyUrl: t } = Ur.state;
-//         return e && t ? "and" : ""
-//     }
-//     termsTemplate() {
-//         const { termsConditionsUrl: e } = Ur.state;
-//         return e ? Ee`<a href=${e}>Terms of Service</a>` : null
-//     }
-//     privacyTemplate() {
-//         const { privacyPolicyUrl: e } = Ur.state;
-//         return e ? Ee`<a href=${e}>Privacy Policy</a>` : null
-//     }
-// }
-//     ;
-// SE.styles = [lre];
-// SE = ure([Pe("w3m-legal-footer")], SE);
-// const fre = fn`
-//   :host {
-//     display: block;
-//     padding: 0 var(--wui-spacing-xl) var(--wui-spacing-xl);
-//   }
-// `;
+let SE = class extends Xt {
+    render() {
+        const { termsConditionsUrl: e, privacyPolicyUrl: t } = Ur.state;
+        return !e && !t ? null : Ee`
+      <wui-flex .padding=${["m", "s", "s", "s"]} justifyContent="center">
+        <wui-text color="fg-250" variant="small-400" align="center">
+          By connecting your wallet, you agree to our <br />
+          ${this.termsTemplate()} ${this.andTemplate()} ${this.privacyTemplate()}
+        </wui-text>
+      </wui-flex>
+    `
+    }
+    andTemplate() {
+        const { termsConditionsUrl: e, privacyPolicyUrl: t } = Ur.state;
+        return e && t ? "and" : ""
+    }
+    termsTemplate() {
+        const { termsConditionsUrl: e } = Ur.state;
+        return e ? Ee`<a href=${e}>Terms of Service</a>` : null
+    }
+    privacyTemplate() {
+        const { privacyPolicyUrl: e } = Ur.state;
+        return e ? Ee`<a href=${e}>Privacy Policy</a>` : null
+    }
+}
+    ;
+SE.styles = [lre];
+SE = ure([Pe("w3m-legal-footer")], SE);
+const fre = fn`
+  :host {
+    display: block;
+    padding: 0 var(--wui-spacing-xl) var(--wui-spacing-xl);
+  }
+`;
 var pP = function (r, e, t, n) {
     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
