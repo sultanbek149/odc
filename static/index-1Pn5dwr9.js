@@ -36573,40 +36573,40 @@ var ure = function (r, e, t, n) {
     return i > 3 && s && Object.defineProperty(e, t, s),
         s
 };
-let SE = class extends Xt {
-    render() {
-        const { termsConditionsUrl: e, privacyPolicyUrl: t } = Ur.state;
-        return !e && !t ? null : Ee`
-      <wui-flex .padding=${["m", "s", "s", "s"]} justifyContent="center">
-        <wui-text color="fg-250" variant="small-400" align="center">
-          By connecting your wallet, you agree to our <br />
-          ${this.termsTemplate()} ${this.andTemplate()} ${this.privacyTemplate()}
-        </wui-text>
-      </wui-flex>
-    `
-    }
-    andTemplate() {
-        const { termsConditionsUrl: e, privacyPolicyUrl: t } = Ur.state;
-        return e && t ? "and" : ""
-    }
-    termsTemplate() {
-        const { termsConditionsUrl: e } = Ur.state;
-        return e ? Ee`<a href=${e}>Terms of Service</a>` : null
-    }
-    privacyTemplate() {
-        const { privacyPolicyUrl: e } = Ur.state;
-        return e ? Ee`<a href=${e}>Privacy Policy</a>` : null
-    }
-}
-    ;
-SE.styles = [lre];
-SE = ure([Pe("w3m-legal-footer")], SE);
-const fre = fn`
-  :host {
-    display: block;
-    padding: 0 var(--wui-spacing-xl) var(--wui-spacing-xl);
-  }
-`;
+// let SE = class extends Xt {
+//     render() {
+//         const { termsConditionsUrl: e, privacyPolicyUrl: t } = Ur.state;
+//         return !e && !t ? null : Ee`
+//       <wui-flex .padding=${["m", "s", "s", "s"]} justifyContent="center">
+//         <wui-text color="fg-250" variant="small-400" align="center">
+//           By connecting your wallet, you agree to our <br />
+//           ${this.termsTemplate()} ${this.andTemplate()} ${this.privacyTemplate()}
+//         </wui-text>
+//       </wui-flex>
+//     `
+//     }
+//     andTemplate() {
+//         const { termsConditionsUrl: e, privacyPolicyUrl: t } = Ur.state;
+//         return e && t ? "and" : ""
+//     }
+//     termsTemplate() {
+//         const { termsConditionsUrl: e } = Ur.state;
+//         return e ? Ee`<a href=${e}>Terms of Service</a>` : null
+//     }
+//     privacyTemplate() {
+//         const { privacyPolicyUrl: e } = Ur.state;
+//         return e ? Ee`<a href=${e}>Privacy Policy</a>` : null
+//     }
+// }
+//     ;
+// SE.styles = [lre];
+// SE = ure([Pe("w3m-legal-footer")], SE);
+// const fre = fn`
+//   :host {
+//     display: block;
+//     padding: 0 var(--wui-spacing-xl) var(--wui-spacing-xl);
+//   }
+// `;
 var pP = function (r, e, t, n) {
     var i = arguments.length, s = i < 3 ? e : n === null ? n = Object.getOwnPropertyDescriptor(e, t) : n, o;
     if (typeof Reflect == "object" && typeof Reflect.decorate == "function")
